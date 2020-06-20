@@ -20,10 +20,10 @@ This repo provides a script that attempts to give us users the `browser.urlbar.c
 
 The script works for me.
 And I’m running Firefox Nightly on Arch Linux.
-This is the software setup that I’ve _tested_ — it may work for other setups, too:
+This is the software setup that I’ve _tested_ — it may work for other setups, too, and this script is likely to work with later versions as well:
 
 * Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.2.arch1-1`)
-* Firefox Nightly 79.0a1 (2020-06-11 through 2020-06-17) (64-bit)
+* Firefox Nightly 79.0a1 (2020-06-11 through 2020-06-19) (64-bit)
 * [`extra/unzip`][unzip] `6.0-14`
 * [`extra/zip`][zip] `3.0-9`
 
