@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Script repo: https://github.com/SebastianSimon/firefox-selection-fix
 # See https://superuser.com/a/1559926/751213 for an explanation.
 
 firefox_dir='/usr/share/firefox'
@@ -11,14 +12,18 @@ if [[ $(id -u) -ne 0 ]]; then
   
   if [[ -f /tmp/omni.ja~ ]]; then
     read -p 'Create backup of omni.ja before applying the fix? This overwrites the old backup! [y/N] ' -r create_backup
-    echo
   fi
   
-  if [[ $create_backup =~ ^[Yy]$ ]]; then
+  if [[ "$create_backup" =~ ^[Yy]$ ]]; then
+    echo "Copying '${firefox_dir}/browser/omni.ja' to '/tmp/omni.ja~'."
     cp ${firefox_dir}/browser/omni.ja /tmp/omni.ja~
   fi
   
+  echo
+  echo "Fixing Firefox: '${firefox_dir}'."
+  
   sudo "$BASH_SOURCE" $(printf '%q ' "$@")
+  
   exit $?
 fi
 
@@ -34,4 +39,6 @@ mv omni/omni.ja ${firefox_dir}/browser/omni.ja
 chown --reference=omni.ja~ ${firefox_dir}/browser/omni.ja
 chmod --reference=omni.ja~ ${firefox_dir}/browser/omni.ja
 rm -r omni
+echo 'Your Firefox should now be able to run with an improved user experience!'
+
 bash
