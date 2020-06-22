@@ -3,7 +3,7 @@
 # Script repo: https://github.com/SebastianSimon/firefox-selection-fix
 # See https://superuser.com/a/1559926/751213 for an explanation.
 
-firefox_dir=$(whereis firefox | cut -d ' ' -f2)
+firefox_dir=$(whereis firefox | cut -d ' ' -f 2)
 
 if [[ ! -f $firefox_dir/browser/omni.ja ]]; then
   firefox_dir='/usr/lib/firefox' # Fallback path: put your Firefox install path here. The install path includes the `firefox` binary and a `browser` directory.

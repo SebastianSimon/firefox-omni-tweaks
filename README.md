@@ -54,7 +54,7 @@ Before running the script:
 If Firefox won’t run properly, restore the backup by typing this in your terminal (double check the file paths):
 
 ```sh
-sudo cp /tmp/omni.ja~ '$(whereis firefox | cut -d ' ' -f2)/browser/omni.ja'
+sudo cp /tmp/omni.ja~ '$(whereis firefox | cut -d ' ' -f 2)/browser/omni.ja'
 ```
 
 
