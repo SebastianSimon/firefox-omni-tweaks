@@ -22,8 +22,8 @@ The script works for me.
 And I’m running Firefox Nightly on Arch Linux.
 This is the software setup that I’ve _tested_ — it may work for other setups, too, and this script is likely to work with later versions as well:
 
-* Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.2.arch1-1`)
-* Firefox Nightly 79.0a1 (2020-06-11 through 2020-06-19) (64-bit)
+* Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.4.arch1-1`)
+* Firefox Nightly 79.0a1 (2020-06-11 through 2020-06-22) (64-bit)
 * [`extra/unzip`][unzip] `6.0-14`
 * [`extra/zip`][zip] `3.0-9`
 
@@ -36,9 +36,9 @@ See [my Super User answer][super-user] for detailed steps.
 Before running the script:
 
 1. [Download][sh] the script.
-2. Double check that `/usr/share/firefox` is your current Firefox directory which contains a `browser` path. If not, edit it to the correct directory.
+2. The script should find out your Firefox install path automatically. If not, edit it and put the correct path where it says `Fallback path`; the correct path contains a `browser` directory with an `omni.ja` in it.
 3. Locate your Firefox desktop configuration file and add `--purgecaches` to the Firefox launch command.
-4. Update Firefox.
+4. Update Firefox and let Firefox install the updates.
 5. Close Firefox.
 6. Set the script as a runnable file.
 
@@ -54,7 +54,7 @@ Before running the script:
 If Firefox won’t run properly, restore the backup by typing this in your terminal (double check the file paths):
 
 ```sh
-sudo cp /tmp/omni.ja~ /usr/share/firefox/browser/omni.ja
+sudo cp /tmp/omni.ja~ '$(whereis firefox | cut -d ' ' -f2)/browser/omni.ja'
 ```
 
 
