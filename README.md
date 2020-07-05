@@ -22,10 +22,13 @@ The script works for me.
 And I’m running Firefox Nightly on Arch Linux.
 This is the software setup that I’ve _tested_ — it may work for other setups, too, and this script is likely to work with later versions as well:
 
-* Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.4.arch1-1`)
-* Firefox Nightly 79.0a1 (2020-06-11 through 2020-06-22) (64-bit)
+* Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.7.arch1-1`)
+* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.3.1-1`)
+* Firefox Nightly 79.0a1 (2020-06-11) through 80.0a1 (2020-07-04) (64-bit)
 * [`extra/unzip`][unzip] `6.0-14`
 * [`extra/zip`][zip] `3.0-9`
+
+Note: the versions will only be updated for significant changes to the script.
 
 ## How to run the script?
 
@@ -36,18 +39,26 @@ See [my Super User answer][super-user] for detailed steps.
 Before running the script:
 
 1. [Download][sh] the script.
-2. The script should find out your Firefox install path automatically. If not, edit it and put the correct path where it says `Fallback path`; the correct path contains a `browser` directory with an `omni.ja` in it.
-3. Locate your Firefox desktop configuration file and add `--purgecaches` to the Firefox launch command.
-4. Update Firefox and let Firefox install the updates.
-5. Close Firefox.
-6. Set the script as a runnable file.
+2. Update Firefox and let Firefox install the updates.
+3. Close Firefox.
+4. Set the script as a runnable file.
 
-### Run the script
+### Running the script
 
-7. Execute the script (by clicking it in the file manager, or from terminal, e.g. `bash Firefox\ Selection\ Fix.sh`).
-8. If you’re running the script for the first time, a backup of the internal application resources (`browser/omni.ja`) of your Firefox installation is created (located in `/tmp`). If you run the script again, you’ll be asked if the backup should be created (and overwrite the old one); press <kbd>y</kbd> and <kbd>Enter</kbd> if you’re sure that your current Firefox installation is working properly.
-9. Enter your root password, hit <kbd>Enter</kbd>.
-10. After a few seconds, the script should finish and you should be able to launch Firefox normally. Don’t worry about the `unzip` error messages. If everything went well, you should now be able to launch a fixed Firefox with an improved URL bar selection behavior (and search bar, too)!
+5. Execute the script by clicking it in the file manager, or from terminal (e.g. `./Firefox\ Selection\ Fix.sh`).
+6. The script should find out your Firefox install path automatically.
+   If not, edit it and put the correct path where it says `Fallback path`; the correct path contains a `browser` directory with an `omni.ja` in it.
+7. If you’re running the script the first time after boot, a temporary backup of the internal application resources (`browser/omni.ja`) of your Firefox installation is created (located in `/tmp`).
+   If you run the script again, you’ll be asked if the backup should be created (and overwrite the old one); press <kbd>y</kbd> and <kbd>Enter</kbd> if you’re sure that your current Firefox installation is working properly.
+8. After a few seconds, the script should finish and you should be able to launch Firefox normally.
+   Don’t worry about the `unzip` error messages.
+   If everything went well, you should now be able to launch a fixed Firefox with an improved URL bar selection behavior (and search bar, too)!
+
+### Setting the privilege level
+
+When at step 5, if you run into “permission denied” errors (or similar) during script execution, run the script as root or edit the script and uncomment the `root_required=true` line.
+You’ll be asked to enter your root password before or during the script.
+Then the script continues to step 6.
 
 ### Restoring the backup
 
@@ -64,5 +75,6 @@ sudo cp /tmp/omni.ja~ '$(whereis firefox | cut -d ' ' -f 2)/browser/omni.ja'
   [bugzilla-workaround]: https://bugzilla.mozilla.org/show_bug.cgi?id=1643973#c6
   [sh]: https://raw.githubusercontent.com/SebastianSimon/firefox-selection-fix/master/Firefox%20Selection%20Fix.sh
   [linux]: https://www.archlinux.org/packages/core/x86_64/linux/
+  [gnome-desktop]: https://www.archlinux.org/packages/extra/x86_64/gnome-desktop/
   [unzip]: https://www.archlinux.org/packages/extra/x86_64/unzip/
   [zip]: https://www.archlinux.org/packages/extra/x86_64/zip/
