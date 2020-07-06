@@ -28,6 +28,7 @@ function check_root_required(){
   for path in "$firefox_dir/browser" "$firefox_dir/browser/omni.ja" '/tmp'; do
     if [[ ! -w "$path" ]]; then
       echo "$path"
+      
       return
     fi
   done
@@ -40,6 +41,7 @@ function check_firefox_path(){
   
   if [[ ! -f "$firefox_dir/browser/omni.ja" ]]; then
     echo "Error: Firefox install path not found in '$firefox_dir'." >&2
+    
     return 1
   fi
   
@@ -93,10 +95,11 @@ function fix_firefox(){
   bash
 }
 
-check_firefox_path || exit 1
+check_firefox_path || exit $?
 
 if [[ -f "$firefox_dir/browser/.purgecaches" ]]; then
   echo "Error: You need to start and close Firefox again to apply the changes before running this script." >&2
+  
   exit 1
 fi
 
