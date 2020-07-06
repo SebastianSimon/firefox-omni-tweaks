@@ -50,9 +50,16 @@ Before running the script:
    If not, edit it and put the correct path where it says `Fallback path`; the correct path contains a `browser` directory with an `omni.ja` in it.
 7. If you’re running the script the first time after boot, a temporary backup of the internal application resources (`browser/omni.ja`) of your Firefox installation is created (located in `/tmp`).
    If you run the script again, you’ll be asked if the backup should be created (and overwrite the old one); press <kbd>y</kbd> and <kbd>Enter</kbd> if you’re sure that your current Firefox installation is working properly.
-8. After a few seconds, the script should finish and you should be able to launch Firefox normally.
+8. After a few seconds, you should be able to launch Firefox normally.
    Don’t worry about the `unzip` error messages.
    If everything went well, you should now be able to launch a fixed Firefox with an improved URL bar selection behavior (and search bar, too)!
+   Press <kbd>Enter</kbd> to exit.
+9. However, if Firefox won’t run properly, close Firefox, and restore the backup by typing <kbd>r</kbd> and <kbd>Enter</kbd>.
+   The backup will be restored and the script will exit.
+   Start Firefox again to go back to normal.
+
+Let me now if something went wrong, by creating a new issue.
+Provide details about terminal output, your system setup, and your software versions.
 
 ### Setting the privilege level
 
@@ -62,10 +69,14 @@ Then the script continues to step 6.
 
 ### Restoring the backup
 
-If Firefox won’t run properly, restore the backup by typing this in your terminal (double check the file paths):
+The script offers an opportunity to test Firefox and restore the backup in case something went wrong.
+If you want to restore the backup later on, type these lines into the terminal.
+Make sure if you need to run this as root, and double-check the file paths.
 
 ```sh
-sudo cp /tmp/omni.ja~ '$(whereis firefox | cut -d ' ' -f 2)/browser/omni.ja'
+firefox_dir=$(whereis firefox | cut -d ' ' -f 2)
+cp -p /tmp/omni.ja~ "$firefox_dir/browser/omni.ja"
+touch "$firefox_dir/browser/.purgecaches"
 ```
 
 
