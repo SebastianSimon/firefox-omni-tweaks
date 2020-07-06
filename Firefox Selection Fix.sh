@@ -4,9 +4,9 @@
 # See https://superuser.com/a/1559926/751213 for detailed explanation.
 
 return_wd="$PWD"
-declare root_required
-#root_required=true # Uncomment this, if root is required due to file permissions.
 description='The Firefox Selection Fix script disables the broken clickSelectsAll behavior of Firefox. Make sure Firefox is up-to-date and closed'
+firefox_dir=$(whereis firefox | cut -d ' ' -f 2)
+fallback_firefox_dir='/usr/lib/firefox' # Fallback path: put your Firefox install path here. The install path includes the `firefox` binary and a `browser` directory.
 
 function require_root(){
   if [[ $(id -u) -ne 0 ]]; then
@@ -18,29 +18,47 @@ function require_root(){
   fix_firefox
 }
 
-function fix_firefox(){
-  firefox_dir=$(whereis firefox | cut -d ' ' -f 2)
-  create_backup='y'
-  restore_backup=''
-
-  if [[ ! -f "$firefox_dir/browser/omni.ja" ]]; then
-    firefox_dir='/usr/lib/firefox' # Fallback path: put your Firefox install path here. The install path includes the `firefox` binary and a `browser` directory.
+function check_root_required(){
+  if [[ $(id -u) -eq 0 ]]; then
+    echo 'already_root'
+    
+    return
   fi
+  
+  for path in "$firefox_dir/browser" "$firefox_dir/browser/omni.ja" '/tmp'; do
+    if [[ ! -w "$path" ]]; then
+      echo "$path"
+      return
+    fi
+  done
+}
 
+function check_firefox_path(){
+  if [[ ! -f "$firefox_dir/browser/omni.ja" ]]; then
+    firefox_dir="$fallback_firefox_dir"
+  fi
+  
   if [[ ! -f "$firefox_dir/browser/omni.ja" ]]; then
     echo "Error: Firefox install path not found in '$firefox_dir'." >&2
-    exit 1
+    return 1
   fi
+  
+  return 0
+}
 
+function fix_firefox(){
+  create_backup='y'
+  restore_backup=''
+  
   if [[ -f /tmp/omni.ja~ ]]; then
     read -p 'Create backup of omni.ja before applying the fix? This overwrites the old backup! [y/N] ' -r create_backup
   fi
-
+  
   if [[ "$create_backup" =~ ^[Yy]$ ]]; then
     echo "Copying '$firefox_dir/browser/omni.ja' to '/tmp/omni.ja~'."
     cp -p "$firefox_dir/browser/omni.ja" /tmp/omni.ja~
   fi
-
+  
   echo "Fixing Firefox: '$firefox_dir'."
   echo
   cd /tmp || exit
@@ -75,15 +93,28 @@ function fix_firefox(){
   bash
 }
 
+check_firefox_path || exit 1
+
+if [[ -f "$firefox_dir/browser/.purgecaches" ]]; then
+  echo "Error: You need to start and close Firefox again to apply the changes before running this script." >&2
+  exit 1
+fi
+
+root_required_reason="$(check_root_required)"
+
 if [[ ! "$FIXFX_SUPPRESS_DESCRIPTION" ]]; then
-  if [[ "$root_required" = 'true' && $(id -u) -ne 0 ]]; then
+  if [[ "$root_required_reason" && $(id -u) -ne 0 ]]; then
     echo "$description."
   else
     read -p "$description, then press [Enter] to continue. "
   fi
 fi
 
-if [[ "$root_required" = 'true' ]]; then
+if [[ "$root_required_reason" ]]; then
+  if [[ "$root_required_reason" != 'already_root' ]]; then
+    echo "Continue as root: write access to '$root_required_reason' is required."
+  fi
+  
   require_root
 else
   fix_firefox

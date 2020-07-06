@@ -1,4 +1,4 @@
-# Firefox Selection Fix – Click will no longer select all in your URL bar
+# Firefox Selection Fix – Click will no longer select all in your URL bar
 
 A script that disables the broken `clickSelectsAll` behavior of Firefox.
 
@@ -46,26 +46,23 @@ Before running the script:
 ### Running the script
 
 5. Execute the script by clicking it in the file manager, or from terminal (e.g. `./Firefox\ Selection\ Fix.sh`).
-6. The script should find out your Firefox install path automatically.
+6. The script should find your Firefox install path automatically.
    If not, edit it and put the correct path where it says `Fallback path`; the correct path contains a `browser` directory with an `omni.ja` in it.
-7. If you’re running the script the first time after boot, a temporary backup of the internal application resources (`browser/omni.ja`) of your Firefox installation is created (located in `/tmp`).
+7. The script checks if you have write access to your Firefox install path and to `/tmp`.
+   If not, you’ll be asked to enter your root password.
+   You can also run the script as `sudo` instead.
+8. If you’re running the script the first time after boot, a temporary backup of the internal application resources (`browser/omni.ja`) of your Firefox installation is created (located in `/tmp`).
    If you run the script again, you’ll be asked if the backup should be created (and overwrite the old one); press <kbd>y</kbd> and <kbd>Enter</kbd> if you’re sure that your current Firefox installation is working properly.
-8. After a few seconds, you should be able to launch Firefox normally.
+9. After a few seconds, you should be able to launch Firefox normally.
    Don’t worry about the `unzip` error messages.
    If everything went well, you should now be able to launch a fixed Firefox with an improved URL bar selection behavior (and search bar, too)!
    Press <kbd>Enter</kbd> to exit.
-9. However, if Firefox won’t run properly, close Firefox, and restore the backup by typing <kbd>r</kbd> and <kbd>Enter</kbd>.
-   The backup will be restored and the script will exit.
-   Start Firefox again to go back to normal.
+10. However, if Firefox won’t run properly, close Firefox, and restore the backup by typing <kbd>r</kbd> and <kbd>Enter</kbd>.
+    The backup will be restored and the script will exit.
+    Start Firefox again to go back to normal.
 
 Let me now if something went wrong, by creating a new issue.
 Provide details about terminal output, your system setup, and your software versions.
-
-### Setting the privilege level
-
-When at step 5, if you run into “permission denied” errors (or similar) during script execution, run the script as root or edit the script and uncomment the `root_required=true` line.
-You’ll be asked to enter your root password before or during the script.
-Then the script continues to step 6.
 
 ### Restoring the backup
 
