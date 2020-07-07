@@ -24,7 +24,7 @@ This is the software setup that I’ve _tested_ — it may work for other se
 
 * Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.7.arch1-1`)
 * Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.3.1-1`)
-* Firefox Nightly 79.0a1 (2020-06-11) through 80.0a1 (2020-07-05) (64-bit)
+* Firefox Nightly 79.0a1 (2020-06-11) through 80.0a1 (2020-07-06) (64-bit)
 * [`extra/unzip`][unzip] `6.0-14`
 * [`extra/zip`][zip] `3.0-9`
 
@@ -45,7 +45,8 @@ Before running the script:
 
 ### Running the script
 
-5. Execute the script by clicking it in the file manager, or from terminal (e.g. `./Firefox\ Selection\ Fix.sh`).
+5. Execute the script in an interactive terminal.
+   Either click it in your file manager, then pick the “Run in terminal” option, or run it directly as e.g. `bash ./Firefox\ Selection\ Fix.sh`.
 6. The script should find your Firefox install path automatically.
    If not, edit it and put the correct path where it says `Fallback path`; the correct path contains a `browser` directory with an `omni.ja` in it.
 7. The script checks if you have write access to your Firefox install path and to `/tmp`.
