@@ -49,8 +49,8 @@ function check_firefox_path(){
 }
 
 function fix_firefox(){
-  create_backup='y'
-  restore_backup=''
+  local create_backup='y'
+  local restore_backup=''
   
   if [[ -f /tmp/omni.ja~ ]]; then
     read -p 'Create backup of omni.ja before applying the fix? This overwrites the old backup! [y/N] ' -r create_backup
