@@ -4,6 +4,7 @@
 # See https://superuser.com/a/1559926/751213 for detailed explanation.
 
 return_wd="$PWD"
+reason_already_root='already_root'
 description='The Firefox Selection Fix script disables the broken clickSelectsAll behavior of Firefox. Make sure Firefox is up-to-date and closed'
 firefox_dir=$(whereis firefox | cut -d ' ' -f 2)
 fallback_firefox_dir='/usr/lib/firefox' # Fallback path: put your Firefox install path here. The install path includes the `firefox` binary and a `browser` directory.
@@ -20,7 +21,7 @@ function require_root(){
 
 function check_root_required(){
   if [[ $(id -u) -eq 0 ]]; then
-    echo 'already_root'
+    echo "$reason_already_root"
     
     return
   fi
@@ -68,6 +69,7 @@ function fix_firefox(){
   unzip -q "$firefox_dir/browser/omni.ja" -d omni
   sed -i 's/this\._preventClickSelectsAll = this\.focused;/this._preventClickSelectsAll = true;/' omni/modules/UrlbarInput.jsm
   sed -i 's/this\._preventClickSelectsAll = this\._textbox\.focused;/this._preventClickSelectsAll = true;/' omni/chrome/browser/content/browser/search/searchbar.js
+  sed -i 's/return shortkey\.split[(]"_"[)]\[1\];/return (shortkey || "_").split("_")[1];/' omni/chrome/devtools/modules/devtools/client/definitions.js # See https://github.com/SebastianSimon/firefox-selection-fix/issues/2
   cd omni || exit
   zip -qr9XD omni.ja ./*
   cd ..
@@ -114,7 +116,7 @@ if [[ ! "$FIXFX_SUPPRESS_DESCRIPTION" ]]; then
 fi
 
 if [[ "$root_required_reason" ]]; then
-  if [[ "$root_required_reason" != 'already_root' ]]; then
+  if [[ "$root_required_reason" != "$reason_already_root" ]]; then
     echo "Continue as root: write access to '$root_required_reason' is required."
   fi
   
