@@ -23,8 +23,8 @@ And I’m running Firefox Nightly on Arch Linux.
 This is the software setup that I’ve _tested_ — it may work for other setups, too, and this script is likely to work with later versions as well:
 
 * Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.7.arch1-1`)
-* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.3.1-1`)
-* Firefox Nightly 79.0a1 (2020-06-11) through 80.0a1 (2020-07-06) (64-bit)
+* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.3.1-1` through ``1:3.36.4-1``)
+* Firefox Nightly 79.0a1 (2020-06-11) through 80.0a1 (2020-07-10) (64-bit)
 * [`extra/unzip`][unzip] `6.0-14`
 * [`extra/zip`][zip] `3.0-9`
 
