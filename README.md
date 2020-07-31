@@ -22,9 +22,14 @@ The script works for me.
 And I’m running Firefox Nightly on Arch Linux.
 This is the software setup that I’ve _tested_ — it may work for other setups, too, and this script is likely to work with later versions as well:
 
-* Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.7.arch1-1`)
+<!--
+Versions:
+pacman -Qi linux gnome-desktop unzip zip
+-->
+
+* Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.10.arch1-1`)
 * Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.3.1-1` through ``1:3.36.4-1``)
-* Firefox Nightly 79.0a1 (2020-06-11) through 80.0a1 (2020-07-10) (64-bit)
+* Firefox Nightly 79.0a1 (2020-06-11) through 81.0a1 (2020-07-30) (64-bit)
 * [`extra/unzip`][unzip] `6.0-14`
 * [`extra/zip`][zip] `3.0-9`
 
@@ -55,7 +60,6 @@ Before running the script:
 8. If you’re running the script the first time after boot, a temporary backup of the internal application resources (`browser/omni.ja`) of your Firefox installation is created (located in `/tmp`).
    If you run the script again, you’ll be asked if the backup should be created (and overwrite the old one); press <kbd>y</kbd> and <kbd>Enter</kbd> if you’re sure that your current Firefox installation is working properly.
 9. After a few seconds, you should be able to launch Firefox normally.
-   Don’t worry about the `unzip` error messages.
    If everything went well, you should now be able to launch a fixed Firefox with an improved URL bar selection behavior (and search bar, too)!
    Press <kbd>Enter</kbd> to exit.
 10. However, if Firefox won’t run properly, close Firefox, and restore the backup by typing <kbd>r</kbd> and <kbd>Enter</kbd>.
