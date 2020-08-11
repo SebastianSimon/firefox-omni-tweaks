@@ -27,9 +27,9 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.10.arch1-1`)
+* Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.12.arch1-1`)
 * Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.3.1-1` through ``1:3.36.4-1``)
-* Firefox Nightly 79.0a1 (2020-06-11) through 81.0a1 (2020-07-30) (64-bit)
+* Firefox Nightly 79.0a1 (2020-06-11) through 81.0a1 (2020-08-10) (64-bit)
 * [`extra/unzip`][unzip] `6.0-14`
 * [`extra/zip`][zip] `3.0-9`
 
@@ -37,16 +37,19 @@ Note: the versions will only be updated for significant changes to the script.
 
 ## How to run the script?
 
+The script only needs to be executed after each update of Firefox.
+
 See [my Super User answer][super-user] for detailed steps.
 
-### Preliminaries
-
-Before running the script:
+### Before using the script for the _first_ time
 
 1. [Download][sh] the script.
-2. Update Firefox and let Firefox install the updates.
-3. Close Firefox.
-4. Set the script as a runnable file.
+2. Set the script as a runnable file.
+
+### Before running the script
+
+3. Update Firefox and start Firefox so it installs all the updates properly.
+4. Close Firefox.
 
 ### Running the script
 
@@ -56,7 +59,7 @@ Before running the script:
    If not, edit it and put the correct path where it says `Fallback path`; the correct path contains a `browser` directory with an `omni.ja` in it.
 7. The script checks if you have write access to your Firefox install path and to `/tmp`.
    If not, you’ll be asked to enter your root password.
-   You can also run the script as `sudo` instead.
+   You can also run the script with `sudo` instead.
 8. If you’re running the script the first time after boot, a temporary backup of the internal application resources (`browser/omni.ja`) of your Firefox installation is created (located in `/tmp`).
    If you run the script again, you’ll be asked if the backup should be created (and overwrite the old one); press <kbd>y</kbd> and <kbd>Enter</kbd> if you’re sure that your current Firefox installation is working properly.
 9. After a few seconds, you should be able to launch Firefox normally.
@@ -68,6 +71,18 @@ Before running the script:
 
 Let me now if something went wrong, by creating a new issue.
 Provide details about terminal output, your system setup, and your software versions.
+
+### Make sure to apply the changes properly
+
+The script automatically modifies the `browser/omni.ja` file and creates a `.purgecaches` file.
+
+Every time after `browser/omni.ja` is either **updated** (by Firefox or a package manager), **modified** by the script, or **restored** from backup, Firefox needs to be started, in order for these changes to be _applied_.
+The script should only run after an **update** or a **restoration** has been _applied_.
+It shouldn’t be run again after a **modification** has been applied.
+
+During this startup the `.purgecaches` file must be in place; the startup automatically removes the file which ensures that the new `browser/omni.ja` is used.
+
+If the script displays the error _“Error: You need to start and close Firefox again to apply the changes before running this script.”_, then the `.purgecaches` file still exists, meaning that Firefox hasn’t been started yet and hadn’t had a chance to _apply_ any **update**, backup **restoration**, or **modification**.
 
 ### Restoring the backup
 
