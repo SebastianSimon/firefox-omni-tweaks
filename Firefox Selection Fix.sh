@@ -50,20 +50,27 @@ function require_root(){
 }
 
 function unzip_without_expected_errors(){
-  local -r unzip_errors="$(unzip -q "${firefox_dir}/browser/omni.ja" -d omni 2>&1)"
+  local -r unzip_errors="$(unzip -qq "${firefox_dir}/browser/omni.ja" -d omni 2>&1)"
   local -r expected_errors='^warning.+?\[.*?omni\.ja\]:.+?[1-9][0-9]*.+?extra.+?bytes.+?attempting.+?anyway.+?error.+?\[.*?omni\.ja\]:.+?reported.+?length.+?-[1-9][0-9]*.+?bytes.+?long.+?Compensating\.{3}$'
   
-  if (echo "${unzip_errors}" | xargs | grep --extended-regexp --quiet "${expected_errors}"); then
-    return 0
-  else
+  if ! (shopt -s nullglob dotglob; unzipped_files=(omni/*); ((${#unzipped_files[@]}))); then
     echo
-    echo -e "\033[0;91mUnexpected error in unzip; terminating.\033[0m" >&2
+    echo -e "\033[0;91mUnexpected warning(s) or error(s) in unzip; terminating.\033[0m" >&2
     echo "${unzip_errors}" >&2
     rm -r omni
     cd "${return_wd}" || exit
     
     return 1
   fi
+  
+  if [[ "${unzip_errors}" ]] && ! (echo "${unzip_errors}" | xargs | grep --extended-regexp --quiet "${expected_errors}"); then
+    echo
+    echo "Note: unexpected warning(s) or error(s) in unzip:"
+    echo "${unzip_errors}"
+    echo
+  fi
+  
+  return 0
 }
 
 function fix_firefox(){
