@@ -6,7 +6,7 @@
 readonly return_wd="${PWD}"
 readonly reason_already_root='already_root'
 readonly description='The Firefox Selection Fix script disables the broken clickSelectsAll behavior of Firefox. Make sure Firefox is up-to-date and closed'
-firefox_dir=$(whereis firefox | cut --delimiter=' ' --fields=2)
+firefox_dir="$(whereis firefox | cut --delimiter=' ' --fields=2)"
 fallback_firefox_dir='/usr/lib/firefox' # Fallback path: put your Firefox install path here. The install path includes the `firefox` binary and a `browser` directory.
 
 function check_firefox_path(){
@@ -30,7 +30,7 @@ function check_root_required(){
     return
   fi
   
-  for path in "${firefox_dir}/browser" "${firefox_dir}/browser/omni.ja" '/tmp'; do
+  for path in '/tmp' "${firefox_dir}/browser" "${firefox_dir}/browser/omni.ja"; do
     if [[ ! -w "${path}" ]]; then
       echo "${path}"
       
@@ -50,12 +50,12 @@ function require_root(){
 }
 
 function unzip_without_expected_errors(){
-  local -r unzip_errors="$(unzip -qq -d omni -- "${firefox_dir}/browser/omni.ja" 2>&1)"
+  local -r unzip_errors="$(unzip -d omni -o -qq -- "${firefox_dir}/browser/omni.ja" 2>&1)"
   local -r expected_errors='^warning.+?\[.*?omni\.ja\]:.+?[1-9][0-9]*.+?extra.+?bytes.+?attempting.+?anyway.+?error.+?\[.*?omni\.ja\]:.+?reported.+?length.+?-[1-9][0-9]*.+?bytes.+?long.+?Compensating\.{3}$'
   
-  if ! (shopt -s nullglob dotglob; unzipped_files=(omni/*); ((${#unzipped_files[@]}))); then
+  if ! (shopt -s nullglob; unzipped_files=(omni/*); ((${#unzipped_files[@]}))); then
     echo
-    echo -e "\033[0;91mUnexpected warning(s) or error(s) in unzip; terminating.\033[0m" >&2
+    echo "$(tput setaf 9)Unexpected warning(s) or error(s) in unzip; terminating.$(tput sgr 0)" >&2
     echo "${unzip_errors}" >&2
     rm --recursive -- omni
     cd -- "${return_wd}" || exit
@@ -92,9 +92,8 @@ function fix_firefox(){
   unzip_without_expected_errors || exit
   sed --in-place -- 's/this\._preventClickSelectsAll = this\.focused;/this._preventClickSelectsAll = true;/' omni/modules/UrlbarInput.jsm
   sed --in-place -- 's/this\._preventClickSelectsAll = this\._textbox\.focused;/this._preventClickSelectsAll = true;/' omni/chrome/browser/content/browser/search/searchbar.js
-  sed --in-place -- 's/return shortkey\.split[(]"_"[)]\[1\];/return (shortkey || "_").split("_")[1];/' omni/chrome/devtools/modules/devtools/client/definitions.js # See https://github.com/SebastianSimon/firefox-selection-fix/issues/2
   cd -- omni || exit
-  zip --no-dir-entries --quiet --recurse-paths --strip-extra -9 omni.ja -- ./*
+  zip -0 --no-dir-entries --quiet --recurse-paths --strip-extra omni.ja -- ./*
   cd -- .. || exit
   mv -- omni/omni.ja "${firefox_dir}/browser/omni.ja" || exit
   chown --reference=omni.ja~ -- "${firefox_dir}/browser/omni.ja"
@@ -111,8 +110,8 @@ function fix_firefox(){
     touch -- "${firefox_dir}/browser/.purgecaches"
   else
     echo 'You can restore the backup later on by typing these two commands:'
-    echo -e "\033[0;40;96mcp -p /tmp/omni.ja~ ${firefox_dir}/browser/omni.ja"
-    echo -e "touch ${firefox_dir}/browser/.purgecaches\033[0m"
+    echo "$(tput setaf 14)cp -p /tmp/omni.ja~ ${firefox_dir}/browser/omni.ja"
+    echo "touch ${firefox_dir}/browser/.purgecaches$(tput sgr 0)"
     echo "You can also copy the file '/tmp/omni.ja~' to another backup location."
   fi
   
@@ -124,7 +123,7 @@ check_firefox_path || exit
 if [[ -f "${firefox_dir}/browser/.purgecaches" ]]; then
   echo "Error: You need to start and close Firefox again to apply the changes before running this script." >&2
   
-  exit 1
+  exit -- 1
 fi
 
 root_required_reason="$(check_root_required)"
@@ -133,8 +132,7 @@ if [[ ! "${FIXFX_SUPPRESS_DESCRIPTION}" ]]; then
   if [[ "${root_required_reason}" && $(id --user) -ne 0 ]]; then
     echo "${description}."
   else
-    # shellcheck disable=SC2162
-    read -p "${description}, then press [Enter] to continue. "
+    read -p "${description}, then press [Enter] to continue. " -r
   fi
 fi
 
