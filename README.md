@@ -18,8 +18,8 @@ This repo provides a script that attempts to give us users the `browser.urlbar.c
 
 ## Where does this script work?
 
-The script works for me.
-And I’m running Firefox Nightly on Arch Linux.
+The script works for _me_.
+And _I’m_ running Firefox Nightly on Arch Linux.
 This is the software setup that I’ve _tested_ — it may work for other setups, too, and this script is likely to work with later versions as well:
 
 <!--
@@ -27,11 +27,11 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Arch Linux ([`core/linux`][linux] `5.6.15.arch1-1` through `5.7.12.arch1-1`)
-* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.3.1-1` through ``1:3.36.4-1``)
-* Firefox Nightly 79.0a1 (2020-06-11) through 81.0a1 (2020-08-10) (64-bit)
-* [`extra/unzip`][unzip] `6.0-14`
-* [`extra/zip`][zip] `3.0-9`
+* Firefox Nightly 81.0a1 (2020-08-20) (64-bit)
+* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1`)
+* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1`)
+* Info-ZIP UnZip ([`extra/unzip`][unzip] `6.0-14`)
+* Info-ZIP Zip [`extra/zip`][zip] `3.0-9`
 
 Note: the versions will only be updated for significant changes to the script.
 
@@ -61,34 +61,25 @@ See [my Super User answer][super-user] for detailed steps.
    If not, you’ll be asked to enter your root password.
    You can also run the script with `sudo` instead.
 8. If you’re running the script the first time after boot, a temporary backup of the internal application resources (`browser/omni.ja`) of your Firefox installation is created (located in `/tmp`).
-   If you run the script again, you’ll be asked if the backup should be created (and overwrite the old one); press <kbd>y</kbd> and <kbd>Enter</kbd> if you’re sure that your current Firefox installation is working properly.
-9. After a few seconds, you should be able to launch Firefox normally.
+   If you run the script some time later, you’ll be asked if the backup should be created (and overwrite the old one); press <kbd>y</kbd> and <kbd>Enter</kbd> if you’re sure that your current Firefox installation is working properly.
+9. After a few moments, you should be able to launch Firefox normally.
    If everything went well, you should now be able to launch a fixed Firefox with an improved URL bar selection behavior (and search bar, too)!
    Press <kbd>Enter</kbd> to exit.
 10. However, if Firefox won’t run properly, close Firefox, and restore the backup by typing <kbd>r</kbd> and <kbd>Enter</kbd>.
     The backup will be restored and the script will exit.
     Start Firefox again to go back to normal.
 
-Let me now if something went wrong, by creating a new issue.
+Let me know if something went wrong, by creating a new issue.
 Provide details about terminal output, your system setup, and your software versions.
 
-### Make sure to apply the changes properly
-
 The script automatically modifies the `browser/omni.ja` file and creates a `.purgecaches` file.
-
-Every time after `browser/omni.ja` is either **updated** (by Firefox or a package manager), **modified** by the script, or **restored** from backup, Firefox needs to be started, in order for these changes to be _applied_.
-The script should only run after an **update** or a **restoration** has been _applied_.
-It shouldn’t be run again after a **modification** has been applied.
-
-During this startup the `.purgecaches` file must be in place; the startup automatically removes the file which ensures that the new `browser/omni.ja` is used.
-
-If the script displays the error _“Error: You need to start and close Firefox again to apply the changes before running this script.”_, then the `.purgecaches` file still exists, meaning that Firefox hasn’t been started yet and hadn’t had a chance to _apply_ any **update**, backup **restoration**, or **modification**.
+Always [make sure to apply the changes properly][wiki-apply]; this ensures reproducibility of any issue.
 
 ### Restoring the backup
 
 The script offers an opportunity to test Firefox and restore the backup in case something went wrong.
-If you want to restore the backup later on, type these lines into the terminal.
-Make sure if you need to run this as root, and double-check the file paths.
+If you want to restore the backup later on, type these commands into the terminal.
+Check if you need to run this as root, and double-check the file paths.
 
 ```sh
 firefox_dir=$(whereis firefox | cut -d ' ' -f 2)
@@ -106,3 +97,4 @@ touch "$firefox_dir/browser/.purgecaches"
   [gnome-desktop]: https://www.archlinux.org/packages/extra/x86_64/gnome-desktop/
   [unzip]: https://www.archlinux.org/packages/extra/x86_64/unzip/
   [zip]: https://www.archlinux.org/packages/extra/x86_64/zip/
+  [wiki-apply]: https://github.com/SebastianSimon/firefox-selection-fix/wiki/Apply-changes-to-Firefox-properly
