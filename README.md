@@ -27,13 +27,15 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 81.0a1 (2020-08-20) (64-bit)
-* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1`)
-* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1`)
+* Firefox Nightly 81.0a1 (2020-08-20) through 83.0a1 (2020-10-13) (64-bit)
+<!-- * Firefox ESR 78 (64-bit) -->
+* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.8.14.arch1-1`)
+* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:3.38.1-1`)
+* Bash 4.x+
 * Info-ZIP UnZip ([`extra/unzip`][unzip] `6.0-14`)
 * Info-ZIP Zip [`extra/zip`][zip] `3.0-9`
 
-Note: the versions will only be updated for significant changes to the script.
+_Note: the versions will only be updated for substantial changes to the script._
 
 ## How to run the script?
 
@@ -55,8 +57,9 @@ See [my Super User answer][super-user] for detailed steps.
 
 5. Execute the script in an interactive terminal.
    Either click it in your file manager, then pick the “Run in terminal” option, or run it directly as e.g. `bash ./Firefox\ Selection\ Fix.sh`.
-6. The script should find your Firefox install path automatically.
-   If not, edit it and put the correct path where it says `Fallback path`; the correct path contains a `browser` directory with an `omni.ja` in it.
+6. The script should find your Firefox (and Firefox ESR) install path(s) automatically.
+   If multiple viable paths are found, you can select the one you want to fix.
+   If no paths are found, edit the script and put the correct path where it says `Fallback path`; the correct path contains a `browser` directory with an `omni.ja` in it.
 7. The script checks if you have write access to your Firefox install path and to `/tmp`.
    If not, you’ll be asked to enter your root password.
    You can also run the script with `sudo` instead.
@@ -79,10 +82,11 @@ Always [make sure to apply the changes properly][wiki-apply]; this ensures repro
 
 The script offers an opportunity to test Firefox and restore the backup in case something went wrong.
 If you want to restore the backup later on, type these commands into the terminal.
-Check if you need to run this as root, and double-check the file paths.
+Check if you need to run this as root, and _double-check_ the file paths.
 
 ```sh
-firefox_dir=$(whereis firefox | cut -d ' ' -f 2)
+firefox_dir=$(whereis -b firefox | cut -d ' ' -f 2)  # Or put the correct path here, like the `Fallback path` line in the script.
+                                                     # `cut -d ' ' -f 2` just takes the first path found, which may not be the right one.
 cp -p /tmp/omni.ja~ "$firefox_dir/browser/omni.ja"
 touch "$firefox_dir/browser/.purgecaches"
 ```
