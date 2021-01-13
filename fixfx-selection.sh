@@ -8,7 +8,8 @@ set -o 'nounset'
 
 readonly fallback_firefox_dir='/usr/lib/firefox' # Fallback path: put your Firefox install path here. The install path includes the `firefox` binary and a `browser` directory.
 
-readonly description='The Firefox Selection Fix script disables the broken clickSelectsAll behavior of Firefox. Make sure Firefox is up-to-date and closed.'
+readonly description='The Firefox Selection Fix script disables the broken clickSelectsAll behavior
+  of Firefox. Make sure Firefox is up-to-date and closed.'
 readonly reason_already_root='already_root'
 readonly unpack_dir='/tmp/fixfx-omni'
 readonly absolute_bash_source="$(readlink --canonicalize -- "${BASH_SOURCE[0]}")"
@@ -220,7 +221,7 @@ check_root_required(){
 
 require_root(){
   if [ "$(id --user)" -ne '0' ]; then
-    sudo FIXFX_SWITCHED_TO_ROOT='true' FIXFX_FIREFOX_PATH="${firefox_dir}" FIXFX_BACKUP_PATH="${options[backup_dir]}" FIXFX_QUIET="${options[quiet]}" "${absolute_bash_source}"
+    sudo 'env' FIXFX_SWITCHED_TO_ROOT='true' FIXFX_FIREFOX_PATH="${firefox_dir}" FIXFX_BACKUP_PATH="${options[backup_dir]}" FIXFX_QUIET="${options[quiet]}" "${absolute_bash_source}"
   fi
 }
 
@@ -293,7 +294,8 @@ find_firefox_path(){
       return
     fi
     
-    echo "${formatting[red]}Error: ${options[firefox_dir]@Q} is not a valid Firefox install path: file '${options[firefox_dir]}/browser/omni.ja' not found.${formatting[reset]}" >&2
+    echo "${formatting[red]}Error: ${options[firefox_dir]@Q} is not a valid Firefox install path:
+  file '${options[firefox_dir]}/browser/omni.ja' not found.${formatting[reset]}" >&2
     
     return '2'
   fi
@@ -420,7 +422,7 @@ unzip_without_expected_errors(){
     return '1'
   fi
   
-  if [[ "${unzip_errors}" ]] && ! echo "${unzip_errors}" | xargs | grep --extended-regexp --quiet -- "${expected_errors}"; then
+  if [[ "${unzip_errors}" ]] && ! xargs <<< "${unzip_errors}" | grep --extended-regexp --quiet -- "${expected_errors}"; then
     echo
     echo "Note: unexpected warning(s) or error(s) in unzip:"
     echo "${unzip_errors}"
@@ -435,7 +437,8 @@ edit_file(){
   local -r fixed_flag_file="$(dirname -- "${input_file}")/.$(basename -- "${input_file}").${namespace}"
   
   if [[ ! -f "${fixed_flag_file}" ]]; then
-    sed --in-place -- "${regex}" "${input_file}" && touch -- "${fixed_flag_file}"
+    sed --in-place -- "${regex}" "${input_file}" \
+      && touch -- "${fixed_flag_file}"
   fi
 }
 
@@ -447,26 +450,26 @@ prepare_backup_instructions(){
 }
 
 clear_firefox_caches(){
-  local -r cache_dir="$(eval 'echo' "~${SUDO_USER:-${USER}}/.cache/mozilla/firefox")"
+  local -r cache_dir="$(getent passwd "${SUDO_USER:-${USER}}" | cut --delimiter=':' --fields='6')/.cache/mozilla/firefox"
   
   if [[ -d "${cache_dir}" ]]; then
     shopt -s 'nullglob'
     
     for startup_cache in "${cache_dir}/"*'/startupCache'; do
-      echo "Clearing startup cache in '$(dirname -- "${startup_cache}")'."
-      rm --recursive --force -- "${startup_cache}" 2>'/dev/null'
+      rm --recursive --force -- "${startup_cache}" 2>'/dev/null' \
+        && echo "Clearing startup cache in '$(dirname -- "${startup_cache}")'."
     done
     
     shopt -u 'nullglob'
   fi
   
-  touch -- "${firefox_dir}/browser/.purgecaches"
-  chown --reference="${firefox_dir}/browser" -- "${firefox_dir}/browser/.purgecaches"
+  touch -- "${firefox_dir}/browser/.purgecaches" \
+    && chown --reference="${firefox_dir}/browser" -- "${firefox_dir}/browser/.purgecaches"
 }
 
 fix_firefox(){
-  echo "Copying '${firefox_dir}/browser/omni.ja' to ${backup_dir@Q}."
-  cp --preserve -- "${firefox_dir}/browser/omni.ja" "${backup_dir}"
+  cp --preserve -- "${firefox_dir}/browser/omni.ja" "${backup_dir}" \
+    && echo "Copying '${firefox_dir}/browser/omni.ja' to ${backup_dir@Q}."
   echo "Fixing Firefox…"
   mkdir -- "${unpack_dir}" || terminate '1'
   unzip_without_expected_errors || terminate "${?}"
@@ -480,20 +483,21 @@ fix_firefox(){
   backup_instructions="$(prepare_backup_instructions)"
   chown --reference="${firefox_dir}/browser" -- "${firefox_dir}/browser/omni.ja"
   clear_firefox_caches
-  echo 'Your Firefox should now be able to run with an improved user experience! Start Firefox and try it out.'
+  echo 'Your Firefox should now be able to run with an improved user experience!
+  Start Firefox and try it out.'
 }
 
 offer_backup_restore(){
   local restore_backup_reply=''
   
   if [[ ! "${options[quiet]}" && "${is_interactive}" ]]; then
-    read -p 'Press [Enter] to exit. If Firefox does not run properly, restore the backup by pressing [r], then [Enter]. ' -r restore_backup_reply
+    read -p 'Press [Enter] to exit. Press [r], then [Enter] to restore the backup. ' -r restore_backup_reply
   fi
   
   if [[ "${restore_backup_reply}" =~ [Rr] ]]; then
     if [[ -f "${backup_dir}" ]]; then
-      echo "Copying ${backup_dir@Q} to '${firefox_dir}/browser/omni.ja'."
-      cp --preserve -- "${backup_dir}" "${firefox_dir}/browser/omni.ja"
+      cp --preserve -- "${backup_dir}" "${firefox_dir}/browser/omni.ja" \
+        && echo "Copying ${backup_dir@Q} to '${firefox_dir}/browser/omni.ja'."
       clear_firefox_caches
     else
       echo "The original backup at ${backup_dir@Q} no longer exists."
