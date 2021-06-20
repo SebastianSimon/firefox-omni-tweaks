@@ -124,13 +124,26 @@ show_help(){
 Disable broken clickSelectsAll behavior in your Firefox installation.
 
 OPTIONs:
-  -f PATH, --firefox PATH  Pick PATH as the Firefox install path which is to
-                             be fixed
-  -b PATH, --backup PATH   Store backup of internal Firefox file
-                             'browser/omni.ja' in PATH; default: '/tmp'
-  -q, --quiet              Do not log every step; do not ask for confirmation;
-                             without -f, use the most recently updated Firefox
-  -h, -?, --help, --?      Show this help and exit
+  -f PATH, --firefox PATH    Pick PATH as the Firefox install path which is to
+                               be fixed.
+  
+  -o FIX_OPTION...,          Choose which tweaks to apply to omni.ja.
+  --option FIX_OPTION...,      FIX_OPTION... is a space-separated list of
+  --options FIX_OPTION...      FIX_OPTION_NAME or FIX_OPTION_NAME=false,
+                               turning tweaks on or off, respectively.
+  
+  -b PATH, --backup PATH     Store backup of internal Firefox file
+                               'browser/omni.ja' in PATH; default: '/tmp'
+  
+  -q, --quiet                Do not log every step; do not ask for
+                               confirmation; without -f, use the most recently
+                               updated Firefox.
+  
+  -h, -?, --help, --?        Show this help and exit
+
+FIX_OPTION_NAMEs:
+  preventClickSelectsAll     Clicking the URL bar or the search bar no longer
+                               selects the entire input field; on by default.
 
 Examples:
   # Fix a specific Firefox installation located at '/usr/lib/firefox-de_DE'.

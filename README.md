@@ -137,7 +137,8 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
   To turn the option `yourOptionHere` _on_, just type `yourOptionHere` by itself, or with any other substring after `=` (e.g. `-o preventClickSelectsAll` or `-o preventClickSelectsAll=true`).
   Note that an option name entry that doesn’t exactly end with `=false` is treated as `=true`.
   
-  To supply multiple option settings, either use the flag multiple times, or type the option names in a space-separated list (e.g. `-o optionA=false -o optionB` or `-o optionA=false optionB`).
+  To supply multiple option settings, use the flag multiple times or type the option names in a space-separated list (e.g. `-o optionA=false -o optionB` or `-o optionA=false optionB`).
+  Combining both is also possible.
   
   See the [available options](#available-options) below.
   Unrecognized options are ignored.
