@@ -1,5 +1,9 @@
 # Firefox Selection Fix – Click will no longer select all in your URL bar
 
+_**Note:** Currently, the script and this repository are undergoing changes in scope. The newly introduced [options](#available-options) are the first step to generalize this script for various `omni.ja` tweaks, not just the `clickSelectsAll` behavior. Stay tuned._
+
+---
+
 A script that disables the broken `clickSelectsAll` behavior of Firefox.
 
 See [this answer on Super User][super-user] for full context and an explanation of the script.
@@ -28,10 +32,10 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 81.0a1 (2020-08-20) through 86.0a1 (2021-01-10) (64-bit)
+* Firefox Nightly 81.0a1 (2020-08-20) through 91.0a1 (2021-06-19) (64-bit)
 <!-- * Firefox ESR 78 (64-bit) (assumed to work, not actually tested yet) -->
-* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.10.4.arch2-1`)
-* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:3.38.2-1`)
+* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.12.9.arch1-1`)
+* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:40.1-2`)
 * Bash 4.x+
 * Info-ZIP UnZip ([`extra/unzip`][unzip] `6.0-14`)
 * Info-ZIP Zip [`extra/zip`][zip] `3.0-9`
@@ -123,12 +127,29 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
   Omit this option to let the script find all `firefox` or `firefox-esr` paths on your system, validate them, and pick the one directory that is found.
   If more than one viable directory is found, the script will ask for selection of a specific directory (unless `-q` or `--quiet` is passed).
 
+* `-o FIX_OPTION...`, `--option FIX_OPTION...`, `--options FIX_OPTION...`
+
+  Choose which functionality you want to change in the `omni.ja`.
+  `FIX_OPTION` can be one or more options; this flag can be used multiple times.
+  
+  To turn the option `yourOptionHere` _off_, use `yourOptionHere=false` (e.g. `--option preventClickSelectsAll=false` or `-o preventClickSelectsAll=false`).
+  
+  To turn the option `yourOptionHere` _on_, just type `yourOptionHere` by itself, or with any other substring after `=` (e.g. `-o preventClickSelectsAll` or `-o preventClickSelectsAll=true`).
+  Note that an option name entry that doesn’t exactly end with `=false` is treated as `=true`.
+  
+  To supply multiple option settings, either use the flag multiple times, or type the option names in a space-separated list (e.g. `-o optionA=false -o optionB` or `-o optionA=false optionB`).
+  
+  See the [available options](#available-options) below.
+  Unrecognized options are ignored.
+
 * `-b PATH`, `--backup PATH`
 
   Stores backup of internal Firefox file `browser/omni.ja` in `PATH`.
   
   If `PATH` points to a directory, an incremental file name like `omni-0.ja~`, `omni-1.ja~`, etc. is used within that directory.
+  
   If `PATH` points to an existing file, the file is overwritten with the backup.
+  
   If the path name of `PATH` (without the file name) points to a directory, but the file name doesn’t point to an existing file, the backup is stored with that file name.
   
   Omitting this option defaults to `/tmp` with incremental backups.
@@ -146,6 +167,12 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 * `-h`, `-?`, `--help`, `--?`
 
   If this option is present, the help information is printed, and the script exits.
+
+### Available options
+
+| Option flag | Default | Description |
+|-------------|:-------:|-------------|
+| `--option preventClickSelectsAll` | On | Clicking the URL bar or the search bar no longer selects the entire input field. |
 
 ### Examples
 

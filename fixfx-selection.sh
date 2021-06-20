@@ -22,6 +22,10 @@ declare -A options=(
   [quiet]=''
   [firefox_dir]=''
   [backup_dir]='/tmp'
+  
+  # Begin settable defaults.
+  [options|preventClickSelectsAll]='on'
+  # End settable defaults.
 )
 is_interactive=''
 valid_firefox_dirs=()
@@ -83,7 +87,7 @@ is_option_key(){
   local -r option_name="${1}"
   
   case "${option_name}" in
-    '-b' | '--backup' | '-f' | '--firefox')
+    '-b' | '--backup' | '-f' | '--firefox' | '-o' | '--option' | '--options')
       return '0'
       ;;
   esac
@@ -177,6 +181,19 @@ set_options(){
         options[firefox_dir]="${2}"
         shift
         ;;
+      '-o' | '--option' | '--options')
+        shift
+
+        while [[ "${1-}" && ! "${1-}" =~ ^- ]]; do
+          if [[ "${1}" =~ ^.*=false$ ]]; then
+            options["options|${1%=*}"]=""
+          else
+            options["options|${1%=*}"]="on"
+          fi
+          
+          shift
+        done
+        ;;
       '-h' | '-?' | '--help' | '--?')
         show_help
         
@@ -189,18 +206,6 @@ set_options(){
     
     shift
   done
-  
-  if [[ "${FIXFX_FIREFOX_PATH-}" ]]; then
-    options[firefox_dir]="${FIXFX_FIREFOX_PATH}"
-  fi
-  
-  if [[ "${FIXFX_BACKUP_PATH-}" ]]; then
-    options[backup_dir]="${FIXFX_BACKUP_PATH}"
-  fi
-  
-  if [[ "${FIXFX_QUIET-}" ]]; then
-    options[quiet]="${FIXFX_QUIET}"
-  fi
 }
 
 check_root_required(){
@@ -221,7 +226,7 @@ check_root_required(){
 
 require_root(){
   if [ "$(id --user)" -ne '0' ]; then
-    sudo 'env' FIXFX_SWITCHED_TO_ROOT='true' FIXFX_FIREFOX_PATH="${firefox_dir}" FIXFX_BACKUP_PATH="${options[backup_dir]}" FIXFX_QUIET="${options[quiet]}" "${absolute_bash_source}"
+    sudo 'env' FIXFX_SWITCHED_TO_ROOT='true' "${absolute_bash_source}" "${@}"
   fi
 }
 
@@ -391,7 +396,7 @@ greet_and_apply_options(){
   
   if [[ "${root_required_reason}" && "${root_required_reason}" != "${reason_already_root}" ]]; then
     echo "Continue as root: write access to ${root_required_reason@Q} is required."
-    require_root || terminate "${?}"
+    require_root "${@}" || terminate "${?}"
     terminate '0'
   elif [[ ! "${options[quiet]}" && ! "${FIXFX_SWITCHED_TO_ROOT-}" && ! "${firefox_path_chosen}" && "${is_interactive}" ]]; then
     needs_confirm_description_read='true'
@@ -431,14 +436,35 @@ unzip_without_expected_errors(){
 }
 
 edit_file(){
-  local -r namespace="${1}"
-  local -r regex="${2}"
-  local -r input_file="${3}"
-  local -r fixed_flag_file="$(dirname -- "${input_file}")/.$(basename -- "${input_file}").${namespace}"
+  local -r purpose="${1}"
+  local -r input_file="${2}"
+  
+  shift 2
+  
+  local -r fixed_flag_file="$(dirname -- "${input_file}")/.$(basename -- "${input_file}").${purpose}"
+  
+  if (( "${#@}" == 0 )); then
+    touch -- "${fixed_flag_file}"
+    
+    return
+  fi
+  
+  local regexes=()
+  
+  for regex in "${@}"; do
+    regexes+=("--expression=${regex}")
+  done
   
   if [[ ! -f "${fixed_flag_file}" ]]; then
-    sed --in-place -- "${regex}" "${input_file}" \
+    sed --in-place --regexp-extended "${regexes[@]}" "${input_file}" \
       && touch -- "${fixed_flag_file}"
+  fi
+}
+
+edit_and_lock_based_on_options(){
+  if [[ "${options[options|preventClickSelectsAll]-}" ]]; then
+    edit_file 'preventClickSelectsAll' "${unpack_dir}/modules/UrlbarInput.jsm" 's/this\._preventClickSelectsAll = this\.focused;/this._preventClickSelectsAll = true;/'
+    edit_file 'preventClickSelectsAll' "${unpack_dir}/chrome/browser/content/browser/search/searchbar.js" 's/this\._preventClickSelectsAll = this\._textbox\.focused;/this._preventClickSelectsAll = true;/'
   fi
 }
 
@@ -473,8 +499,7 @@ fix_firefox(){
   echo "Fixing Firefox…"
   mkdir -- "${unpack_dir}" || terminate '1'
   unzip_without_expected_errors || terminate "${?}"
-  edit_file 'selection' 's/this\._preventClickSelectsAll = this\.focused;/this._preventClickSelectsAll = true;/' "${unpack_dir}/modules/UrlbarInput.jsm"
-  edit_file 'selection' 's/this\._preventClickSelectsAll = this\._textbox\.focused;/this._preventClickSelectsAll = true;/' "${unpack_dir}/chrome/browser/content/browser/search/searchbar.js"
+  edit_and_lock_based_on_options
   (
     cd -- "${unpack_dir}" || terminate '1'
     zip -0 --no-dir-entries --quiet --recurse-paths --strip-extra omni.ja -- './'*
@@ -511,7 +536,7 @@ offer_backup_restore(){
 
 trap -- 'terminate 130' 'INT' 'TERM'
 set_options "${@}"
-greet_and_apply_options
+greet_and_apply_options "${@}"
 fix_firefox
 offer_backup_restore
 terminate '0'
