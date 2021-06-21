@@ -32,7 +32,7 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 81.0a1 (2020-08-20) through 91.0a1 (2021-06-19) (64-bit)
+* Firefox Nightly 81.0a1 (2020-08-20) through 91.0a1 (2021-06-20) (64-bit)
 <!-- * Firefox ESR 78 (64-bit) (assumed to work, not actually tested yet) -->
 * Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.12.9.arch1-1`)
 * Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:40.1-2`)
@@ -90,11 +90,14 @@ Also see [my Super User answer][super-user] for detailed steps.
     The backup will be restored and the script will exit.
     Start Firefox again to go back to normal.
 
-Let me know if something went wrong, by creating a new issue.
+Let me know if something went wrong by creating a new issue.
 Provide details about terminal output, your system setup, and your software versions.
 
 Since this script partially relies on Firefox making sure to use the newly changed `browser/omni.ja`, as opposed to a cached `omni.ja` file, additional care must be taken to make issues reproducible.
 See the [wiki about the startup cache][wiki-cache] to gain insight into the cache clearing mechanism.
+
+You may some day receive a warning about a pattern failing to match due to the original Firefox code having changed.
+Please report these warnings as well.
 
 ### Restoring the backup
 

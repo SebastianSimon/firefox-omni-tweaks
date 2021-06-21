@@ -15,6 +15,7 @@ readonly unpack_dir='/tmp/fixfx-omni'
 readonly absolute_bash_source="$(readlink --canonicalize -- "${BASH_SOURCE[0]}")"
 declare -A -r formatting=(
   [red]="$(tput -- 'setaf' '9')"
+  [yellow]="$(tput -- 'setaf' '11')"
   [cyan]="$(tput -- 'setaf' '14')"
   [reset]="$(tput -- 'sgr' '0')"
 )
@@ -442,8 +443,8 @@ unzip_without_expected_errors(){
   
   if [[ "${unzip_errors}" ]] && ! xargs <<< "${unzip_errors}" | grep --extended-regexp --quiet -- "${expected_errors}"; then
     echo
-    echo "Note: unexpected warning(s) or error(s) in unzip:"
-    echo "${unzip_errors}"
+    echo "${formatting[yellow]}Note: unexpected warning(s) or error(s) in unzip:"
+    echo "${unzip_errors}${formatting[reset]}"
     echo
   fi
 }
@@ -454,30 +455,44 @@ edit_file(){
   
   shift 2
   
-  local -r fixed_flag_file="$(dirname -- "${input_file}")/.$(basename -- "${input_file}").${purpose}"
+  local -r fixed_flag_file="$(dirname -- "${unpack_dir}/${input_file}")/.$(basename -- "${unpack_dir}/${input_file}").${purpose}"
   
-  if (( "${#@}" == 0 )); then
+  if (("${#@}" == 0)); then
     touch -- "${fixed_flag_file}"
     
     return
   fi
   
   local regexes=()
+  local regex_index='1'
+  local match_index='1'
   
   for regex in "${@}"; do
-    regexes+=("--expression=${regex}")
+    regexes+=("--expression=${regex} w ${fixed_flag_file}.${regex_index}")
+    ((regex_index++))
   done
   
-  if [[ ! -f "${fixed_flag_file}" ]]; then
-    sed --in-place --regexp-extended "${regexes[@]}" "${input_file}" \
-      && touch -- "${fixed_flag_file}"
+  if [[ -f "${fixed_flag_file}" ]]; then
+    return
   fi
+  
+  sed --in-place --regexp-extended "${regexes[@]}" "${unpack_dir}/${input_file}" \
+    && touch -- "${fixed_flag_file}"
+
+  while (("${match_index}" < "${regex_index}")); do
+    if [[ ! -s "${fixed_flag_file}.${match_index}" ]]; then
+      echo "${formatting[yellow]}Warning: Pattern '${*:match_index:1}' could not be matched in file ${input_file@Q}.${formatting[reset]}" >&2
+    fi
+    
+    rm -- "${fixed_flag_file}.${match_index}"
+    ((match_index++))
+  done
 }
 
 edit_and_lock_based_on_options(){
   if [[ "${options[options|preventClickSelectsAll]-}" ]]; then
-    edit_file 'preventClickSelectsAll' "${unpack_dir}/modules/UrlbarInput.jsm" 's/this\._preventClickSelectsAll = this\.focused;/this._preventClickSelectsAll = true;/'
-    edit_file 'preventClickSelectsAll' "${unpack_dir}/chrome/browser/content/browser/search/searchbar.js" 's/this\._preventClickSelectsAll = this\._textbox\.focused;/this._preventClickSelectsAll = true;/'
+    edit_file 'preventClickSelectsAll' 'modules/UrlbarInput.jsm' 's/this\._preventClickSelectsAll = this\.focused;/this._preventClickSelectsAll = true;/'
+    edit_file 'preventClickSelectsAll' 'chrome/browser/content/browser/search/searchbar.js' 's/this\._preventClickSelectsAll = this\._textbox\.focused;/this._preventClickSelectsAll = true;/'
   fi
 }
 
