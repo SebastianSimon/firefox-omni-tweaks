@@ -32,10 +32,10 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 81.0a1 (2020-08-20) through 91.0a1 (2021-06-20) (64-bit)
+* Firefox Nightly 81.0a1 (2020-08-20) through 91.0a1 (2021-07-01) (64-bit)
 <!-- * Firefox ESR 78 (64-bit) (assumed to work, not actually tested yet) -->
-* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.12.9.arch1-1`)
-* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:40.1-2`)
+* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.12.13.arch1-2`)
+* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:40.2-1`)
 * Bash 4.x+
 * Info-ZIP UnZip ([`extra/unzip`][unzip] `6.0-14`)
 * Info-ZIP Zip [`extra/zip`][zip] `3.0-9`
@@ -176,7 +176,11 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 
 | Option flag | Default | Description |
 |-------------|:-------:|-------------|
-| `--option preventClickSelectsAll` | On | Clicking the URL bar or the search bar no longer selects the entire input field. |
+| `--option preventClickSelectsAll`      | On  | Clicking the URL bar or the search bar no longer selects the entire input field. |
+| `--option doubleClickSelectsAll`       | Off | Double-clicking the URL bar or the search bar selects the entire input field. |
+| `--option autoSelectCopiesToClipboard` | Off | Certain actions trigger an automatic selection of text in the URL bar or the search bar which aren’t considered user-initiated and as such are not added to the selection clipboard (e.g. selected text which can be inserted with middle-click on Linux) — see [Bugzilla Bug 1653191][bugzilla-1653191]. This option enables clipboard selection for most cases: <kbd>Ctrl</kbd>+<kbd>L</kbd> or <kbd>F6</kbd> for URL bar selection; <kbd>Ctrl</kbd>+<kbd>K</kbd> for search bar selection; <kbd>Esc</kbd> to restore the original URL; <kbd>Tab</kbd> to focus either URL bar or search bar; or single-click or double-click selecting the entire text — if enabled. However, additional options must be passed if selection triggered by a tab switch should also be copied (`tabSwitchCopiesToClipboard`), and if selection triggered by URL auto-complete should be copied (`autoCompleteCopiesToClipboard`). |
+| `--option autoSelectCopiesToClipboard tabSwitchCopiesToClipboard` | Off | Enables selection clipboard as described in `autoSelectCopiesToClipboard`; also enables copying selection in URL bar triggered by switching to a tab with a focused URL bar (with either clicking or with <kbd>Ctrl</kbd>+(<kbd>Shift</kbd>)+<kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>Page Up</kbd>, <kbd>Ctrl</kbd>+<kbd>Page Down</kbd>, <kbd>Alt</kbd>+<kbd>1</kbd>..<kbd>9</kbd>, and possibly other ways). The option `tabSwitchCopiesToClipboard` without `autoSelectCopiesToClipboard` does nothing. |
+| `--option autoSelectCopiesToClipboard autoCompleteCopiesToClipboard` | Off | Enables selection clipboard as described in `autoSelectCopiesToClipboard`; also enables copying selection in URL bar triggered by typing a URL which is known by the browser (e.g. typing `gi` may autocomplete `github.com`, and the part `thub.com` is selected; the option enables automatically copying this selection to the clipboard). The option `autoCompleteCopiesToClipboard` without `autoSelectCopiesToClipboard` does nothing. |
 
 ### Examples
 
@@ -203,6 +207,18 @@ The exact path and file name depends on where you placed the file.
   ```sh
   ./fixfx-selection.sh -b /home/user/backups/my_omni_backup.ja~
   ```
+  
+* This command enables the behavior where double-clicking a URL bar selects the entire URL, but not a single click.
+  
+  ```sh
+  ./fixfx-selection.sh -o preventClickSelectsAll doubleClickSelectsAll
+  ```
+  
+  If you want both and `preventClickSelectsAll` is the default in your script (see `./fixfx-selection.sh -h` to check), use this instead:
+  
+  ```sh
+  ./fixfx-selection.sh -o preventClickSelectsAll=false doubleClickSelectsAll
+  ```
 
 ## Exit status
 
@@ -225,3 +241,4 @@ Error codes (i.e. status codes greater than 0) are usually accompanied by an err
   [unzip]: https://www.archlinux.org/packages/extra/x86_64/unzip/
   [zip]: https://www.archlinux.org/packages/extra/x86_64/zip/
   [wiki-cache]: https://github.com/SebastianSimon/firefox-selection-fix/wiki/Careful-considerations-concerning-clearing-cache
+  [bugzilla-1653191]: https://bugzilla.mozilla.org/show_bug.cgi?id=1653191

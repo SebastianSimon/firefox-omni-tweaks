@@ -2,14 +2,12 @@
 # shellcheck disable=SC2155
 
 # Script repo: https://github.com/SebastianSimon/firefox-selection-fix
-# See https://superuser.com/a/1559926/751213 for detailed explanation.
 
 set -o 'nounset'
 
 readonly fallback_firefox_dir='/usr/lib/firefox' # Fallback path: put your Firefox install path here. The install path includes the `firefox` binary and a `browser` directory.
 
-readonly description='The Firefox Selection Fix script disables the broken clickSelectsAll behavior
-  of Firefox. Make sure Firefox is up-to-date and closed.'
+readonly description='The FixFx script tweaks Firefox. Make sure Firefox is up-to-date and closed.'
 readonly reason_already_root='already_root'
 readonly unpack_dir='/tmp/fixfx-omni'
 readonly absolute_bash_source="$(readlink --canonicalize -- "${BASH_SOURCE[0]}")"
@@ -19,14 +17,17 @@ declare -A -r formatting=(
   [cyan]="$(tput -- 'setaf' '14')"
   [reset]="$(tput -- 'sgr' '0')"
 )
-declare -A options=(
+declare -A settings=(
+  # Begin presets.
   [quiet]=''
   [firefox_dir]=''
   [backup_dir]='/tmp'
-  
-  # Begin settable defaults.
   [options|preventClickSelectsAll]='on'
-  # End settable defaults.
+  [options|doubleClickSelectsAll]=''
+  [options|autoSelectCopiesToClipboard]=''
+  [options|autoCompleteCopiesToClipboard]=''
+  [options|tabSwitchCopiesToClipboard]=''
+  # End presets.
 )
 is_interactive=''
 valid_firefox_dirs=()
@@ -115,14 +116,15 @@ assert_key_option_has_value(){
 }
 
 show_usage(){
-  echo "Usage: ${BASH_SOURCE[0]} [OPTION]...
+  echo "Usage: ${BASH_SOURCE[0]} [OPTION...]
 OPTIONs '-f', '--firefox', '-b', and '--backup' need a PATH value.
+OPTIONs '-o', '--option', and '--options' need a FIX_OPTION value.
 Type '${BASH_SOURCE[0]} --help' for more information."
 }
 
 show_help(){
-  echo "Usage: ${BASH_SOURCE[0]} [OPTION]...
-Disable broken clickSelectsAll behavior in your Firefox installation.
+  echo "Usage: ${BASH_SOURCE[0]} [OPTION...]
+Various tweaks in the omni.ja file of your Firefox installation.
 
 OPTIONs:
   -f PATH, --firefox PATH    Pick PATH as the Firefox install path which is to
@@ -134,17 +136,37 @@ OPTIONs:
                                turning tweaks on or off, respectively.
   
   -b PATH, --backup PATH     Store backup of internal Firefox file
-                               'browser/omni.ja' in PATH; default: '/tmp'
+                               'browser/omni.ja' in PATH; default: ${settings[backup_dir]@Q}.
   
   -q, --quiet                Do not log every step; do not ask for
                                confirmation; without -f, use the most recently
                                updated Firefox.
   
-  -h, -?, --help, --?        Show this help and exit
+  -h, -?, --help, --?        Show this help and exit.
 
 FIX_OPTION_NAMEs:
+  autoSelectCopiesToClipboard
+                             Copy selection to clipboard always when text in
+                               the URL bar or search bar is selected, e.g.
+                               when pressing [Ctrl] + [L] or [F6], but not
+                               when switching tabs or when auto-completing
+                               URLs; ${settings[options|autoSelectCopiesToClipboard]:-off} by default.
+  
+  autoCompleteCopiesToClipboard
+                             Requires autoSelectCopiesToClipboard. Also copies
+                               selection to clipboard when auto-completing
+                               URLs; ${settings[options|autoCompleteCopiesToClipboard]:-off} by default.
+  
+  doubleClickSelectsAll      Double-clicking the URL bar or the search bar
+                               selects the entire input field; ${settings[options|doubleClickSelectsAll]:-off} by default.
+  
   preventClickSelectsAll     Clicking the URL bar or the search bar no longer
-                               selects the entire input field; on by default.
+                               selects the entire input field; ${settings[options|preventClickSelectsAll]:-off} by default.
+  
+  tabSwitchCopiesToClipboard
+                             Requires autoSelectCopiesToClipboard. Also copies
+                               selection to clipboard when switching tabs;
+                               ${settings[options|autoCompleteCopiesToClipboard]:-off} by default.
 
 Examples:
   # Fix a specific Firefox installation located at '/usr/lib/firefox-de_DE'.
@@ -159,6 +181,9 @@ Examples:
   # In this case, the file name 'my_omni_backup.ja~' is used for the backup.
   #   The file is overwritten, if it exists.
   ${BASH_SOURCE[0]} -b /home/user/backups/my_omni_backup.ja~
+  
+  # Like the double-click-selects-all behavior on the URL bar? Use this:
+  ${BASH_SOURCE[0]} -o preventClickSelectsAll doubleClickSelectsAll
 
 Exit codes:
     0  Success
@@ -166,7 +191,7 @@ Exit codes:
     2  Incorrect script usage, e.g. incorrect options or conditions, etc.
   130  Interrupt or kill signal received
 
-Script source / report bugs at:
+Script source, full documentation, bug reports at:
   <https://github.com/SebastianSimon/firefox-selection-fix>"
 }
 
@@ -188,11 +213,11 @@ set_options(){
         break
         ;;
       '-b' | '--backup')
-        options[backup_dir]="${2}"
+        settings[backup_dir]="${2}"
         shift
         ;;
       '-f' | '--firefox')
-        options[firefox_dir]="${2}"
+        settings[firefox_dir]="${2}"
         shift
         ;;
       '-o' | '--option' | '--options')
@@ -200,9 +225,9 @@ set_options(){
 
         while [[ "${1-}" && ! "${1-}" =~ ^- ]]; do
           if [[ "${1}" =~ ^.*=false$ ]]; then
-            options["options|${1%=*}"]=""
+            settings["options|${1%=*}"]=""
           else
-            options["options|${1%=*}"]="on"
+            settings["options|${1%=*}"]="on"
           fi
           
           shift
@@ -214,7 +239,7 @@ set_options(){
         exit
         ;;
       '-q' | '--quiet')
-        options[quiet]='true'
+        settings[quiet]='true'
         ;;
     esac
     
@@ -228,6 +253,8 @@ check_root_required(){
     
     return
   fi
+  
+  local path
   
   for path in "$(dirname -- "${unpack_dir}")" "${backup_target}" "${firefox_dir}/browser" "${firefox_dir}/browser/omni.ja"; do
     if [[ ! -w "${path}" ]]; then
@@ -245,20 +272,20 @@ require_root(){
 }
 
 find_backup_target(){
-  local -r containing_dir="$(dirname -- "${options[backup_dir]}")"
+  local -r containing_dir="$(dirname -- "${settings[backup_dir]}")"
   
   if [[ ! -d "${containing_dir}" ]]; then
-    echo "${formatting[red]}Error: ${options[backup_dir]@Q} is not an existing directory or a file within an existing directory.${formatting[reset]}" >&2
+    echo "${formatting[red]}Error: ${settings[backup_dir]@Q} is not an existing directory or a file within an existing directory.${formatting[reset]}" >&2
     
     return '2'
   fi
   
-  if [[ ! -e "${options[backup_dir]}" ]]; then
+  if [[ ! -e "${settings[backup_dir]}" ]]; then
     echo "${containing_dir}"
-  elif [[ -d "${options[backup_dir]}" || -f "${options[backup_dir]}" ]]; then
-    echo "${options[backup_dir]}"
+  elif [[ -d "${settings[backup_dir]}" || -f "${settings[backup_dir]}" ]]; then
+    echo "${settings[backup_dir]}"
   else
-    echo "${formatting[red]}Error: ${options[backup_dir]@Q} is not a regular file.${formatting[reset]}" >&2
+    echo "${formatting[red]}Error: ${settings[backup_dir]@Q} is not a regular file.${formatting[reset]}" >&2
     
     return '2'
   fi
@@ -267,8 +294,8 @@ find_backup_target(){
 initialize_backup_target(){
   find_backup_target 1>'/dev/null' || return "${?}"
   
-  if [[ -d "${options[backup_dir]}" ]]; then
-    local -r start="${options[backup_dir]}/omni-"
+  if [[ -d "${settings[backup_dir]}" ]]; then
+    local -r start="${settings[backup_dir]}/omni-"
     local -r end='.ja~'
     local incremental_number='0'
     
@@ -281,8 +308,8 @@ initialize_backup_target(){
     
     echo "${start}${incremental_number}${end}"
   else
-    touch -- "${options[backup_dir]}"
-    echo "${options[backup_dir]}"
+    touch -- "${settings[backup_dir]}"
+    echo "${settings[backup_dir]}"
   fi
 }
 
@@ -306,15 +333,15 @@ choose_firefox_path(){
 }
 
 find_firefox_path(){
-  if [[ "${options[firefox_dir]}" ]]; then
-    if [[ -f "${options[firefox_dir]}/browser/omni.ja" ]]; then
-      firefox_dir="${options[firefox_dir]}"
+  if [[ "${settings[firefox_dir]}" ]]; then
+    if [[ -f "${settings[firefox_dir]}/browser/omni.ja" ]]; then
+      firefox_dir="${settings[firefox_dir]}"
       
       return
     fi
     
-    echo "${formatting[red]}Error: ${options[firefox_dir]@Q} is not a valid Firefox install path:
-  file '${options[firefox_dir]}/browser/omni.ja' not found.${formatting[reset]}" >&2
+    echo "${formatting[red]}Error: ${settings[firefox_dir]@Q} is not a valid Firefox install path:
+  file '${settings[firefox_dir]}/browser/omni.ja' not found.${formatting[reset]}" >&2
     
     return '2'
   fi
@@ -355,7 +382,9 @@ find_firefox_path(){
   
   current_firefox_dir=''
   
-  if [[ "${options[quiet]}" || ! "${is_interactive}" ]]; then
+  local most_recently_updated
+  
+  if [[ "${settings[quiet]}" || ! "${is_interactive}" ]]; then
     for most_recently_updated in "${valid_firefox_dirs[@]}"; do
       if [[ "${most_recently_updated}/browser/omni.ja" -nt "${current_firefox_dir}/browser/omni.ja" ]]; then
         current_firefox_dir="${most_recently_updated}"
@@ -369,17 +398,31 @@ find_firefox_path(){
 greet_and_apply_options(){
   local firefox_path_chosen=''
   local needs_confirm_description_read=''
+  local enabled_fix_options=()
+  local fix_option
+  
+  for fix_option in "${!settings[@]}"; do
+    if [[ "${fix_option}" =~ ^options\| && "${settings[${fix_option}]}" ]]; then
+      enabled_fix_options+=("${fix_option#options|}")
+    fi
+  done
   
   if [[ -t 1 ]]; then
     readonly is_interactive='true'
   fi
   
-  if [[ "${options[quiet]}" ]]; then
+  if [[ "${settings[quiet]}" ]]; then
     exec 1>'/dev/null'
   fi
   
   if [[ ! "${FIXFX_SWITCHED_TO_ROOT-}" ]]; then
     echo "${description}"
+    
+    if (("${#enabled_fix_options[@]}" == 0)); then
+      echo "No tweaks enabled; repack omni.ja without edits"
+    else
+      echo "Enabled tweak$( (("${#enabled_fix_options[@]}" > 1)) && echo 's'): ${enabled_fix_options[*]@Q}"
+    fi
   fi
   
   find_firefox_path || terminate "${?}"
@@ -412,7 +455,7 @@ greet_and_apply_options(){
     echo "Continue as root: write access to ${root_required_reason@Q} is required."
     require_root "${@}" || terminate "${?}"
     terminate '0'
-  elif [[ ! "${options[quiet]}" && ! "${FIXFX_SWITCHED_TO_ROOT-}" && ! "${firefox_path_chosen}" && "${is_interactive}" ]]; then
+  elif [[ ! "${settings[quiet]}" && ! "${FIXFX_SWITCHED_TO_ROOT-}" && ! "${firefox_path_chosen}" && "${is_interactive}" ]]; then
     needs_confirm_description_read='true'
   fi
   
@@ -443,7 +486,7 @@ unzip_without_expected_errors(){
   
   if [[ "${unzip_errors}" ]] && ! xargs <<< "${unzip_errors}" | grep --extended-regexp --quiet -- "${expected_errors}"; then
     echo
-    echo "${formatting[yellow]}Note: unexpected warning(s) or error(s) in unzip:"
+    echo "${formatting[yellow]}Warning: unexpected warning(s) or error(s) in unzip:"
     echo "${unzip_errors}${formatting[reset]}"
     echo
   fi
@@ -463,6 +506,7 @@ edit_file(){
     return
   fi
   
+  local regex
   local regexes=()
   local regex_index='1'
   local match_index='1'
@@ -482,6 +526,8 @@ edit_file(){
   while (("${match_index}" < "${regex_index}")); do
     if [[ ! -s "${fixed_flag_file}.${match_index}" ]]; then
       echo "${formatting[yellow]}Warning: Pattern '${*:match_index:1}' could not be matched in file ${input_file@Q}.${formatting[reset]}" >&2
+      
+      break
     fi
     
     rm -- "${fixed_flag_file}.${match_index}"
@@ -490,9 +536,37 @@ edit_file(){
 }
 
 edit_and_lock_based_on_options(){
-  if [[ "${options[options|preventClickSelectsAll]-}" ]]; then
-    edit_file 'preventClickSelectsAll' 'modules/UrlbarInput.jsm' 's/this\._preventClickSelectsAll = this\.focused;/this._preventClickSelectsAll = true;/'
-    edit_file 'preventClickSelectsAll' 'chrome/browser/content/browser/search/searchbar.js' 's/this\._preventClickSelectsAll = this\._textbox\.focused;/this._preventClickSelectsAll = true;/'
+  if [[ "${settings[options|preventClickSelectsAll]-}" ]]; then
+    edit_file 'preventClickSelectsAll' 'modules/UrlbarInput.jsm' 's/(this\._preventClickSelectsAll = )this\.focused;/\1true;/'
+    edit_file 'preventClickSelectsAll' 'chrome/browser/content/browser/search/searchbar.js' 's/(this\._preventClickSelectsAll = )this\._textbox\.focused;/\1true;/'
+  fi
+
+  if [[ "${settings[options|doubleClickSelectsAll]-}" ]]; then
+    edit_file 'doubleClickSelectsAll' 'modules/UrlbarInput.jsm' 's/(if \(event\.target\.id == SEARCH_BUTTON_ID\) \{)/if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        } else \1/'
+    edit_file 'doubleClickSelectsAll' 'chrome/browser/content/browser/search/searchbar.js' '/this\.addEventListener\("mousedown", event => \{/,/\}\);/ s/(\}\);)/        \n        if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        }\n      \1/'
+  fi
+  
+  if [[ "${settings[options|autoSelectCopiesToClipboard]-}" ]]; then
+    edit_file 'autoSelectCopiesToClipboard' 'modules/UrlbarInput.jsm' 's/(_on_select\(event\) \{)/\1\n    this.window.fixfx_isOpeningLocation = false;\n    /' \
+      's/(this\._suppressPrimaryAdjustment = )true;/\1false;/' \
+      's/(this\.inputField\.select\(\);)/\1\n    \n    if(this.window.fixfx_isOpeningLocation){\n      this._on_select({\n        detail: {\n          fixfx_openingLocationCall: true\n        }\n      });\n    }\n    /'
+    edit_file 'autoSelectCopiesToClipboard' 'chrome/browser/content/browser/browser.js' '/function openLocation/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isOpeningLocation = true;\n    \1/' \
+      's/^(\s*searchBar\.select\(\);)$/      window.fixfx_isOpeningSearch = true;\n\1/'
+    edit_file 'autoSelectCopiesToClipboard' 'chrome/browser/content/browser/tabbrowser.js' '/_adjustFocusAfterTabSwitch\(newTab\) \{/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isSwitchingTab = true;\n          \1/'
+    edit_file 'autoSelectCopiesToClipboard' 'chrome/browser/content/browser/search/searchbar.js' 's/^\{$/{\n  XPCOMUtils.defineLazyServiceGetter(this, "ClipboardHelper", "@mozilla.org\/widget\/clipboardhelper;1", "nsIClipboardHelper");\n  /' \
+      's/(this\._textbox\.select\(\);)/\1\n      \n      if(window.fixfx_isOpeningSearch){\n        this.textbox.dispatchEvent(new Event("select"));\n      }/' \
+      's/(_setupTextboxEventListeners\(\) \{)/\1\n      this.textbox.addEventListener("select", () => {\n        window.fixfx_isOpeningSearch = false;\n        \n        if(this.value \&\& Services.clipboard.supportsSelectionClipboard()){\n          ClipboardHelper.copyStringToClipboard(this.value, Services.clipboard.kSelectionClipboard);\n        }\n      });\n      /'
+    
+    if [[ "${settings[options|tabSwitchCopiesToClipboard]-}" ]]; then
+      edit_file 'tabSwitchCopiesToClipboard' 'modules/UrlbarInput.jsm' 's/^\s*!this\.window\.windowUtils\.isHandlingUserInput \|\|$//'
+    else
+      edit_file 'tabSwitchCopiesToClipboard' 'modules/UrlbarInput.jsm' 's/(_on_select\(event\) \{)/\1\n    if(event?.detail?.fixfx_openingLocationCall){\n      this.window.fixfx_isSwitchingTab = false;\n    }\n    \n    const fixfx_isSwitchingTab = this.window.fixfx_isSwitchingTab;\n    \n    if(this.window.fixfx_isSwitchingTab){\n      this.window.setTimeout(() => this.window.setTimeout(() => this.window.fixfx_isSwitchingTab = false));\n    }\n    /' \
+        's/!this\.window\.windowUtils\.isHandlingUserInput \|\|/fixfx_isSwitchingTab ||/'
+    fi
+    
+    if [[ ! "${settings[options|autoCompleteCopiesToClipboard]-}" ]]; then
+      edit_file 'autoCompleteCopiesToClipboard' 'modules/UrlbarInput.jsm' '/_on_select\(event\) \{/,/ClipboardHelper/ s/(if \(!val)\)/\1 || !this.window.windowUtils.isHandlingUserInput \&\& val !== this.inputField.value \&\& this.inputField.value.endsWith(val))/'
+    fi
   fi
 }
 
@@ -505,6 +579,7 @@ prepare_backup_instructions(){
 
 clear_firefox_caches(){
   local -r cache_dir="$(getent passwd "${SUDO_USER:-${USER}}" | cut --delimiter=':' --fields='6')/.cache/mozilla/firefox"
+  local startup_cache
   
   if [[ -d "${cache_dir}" ]]; then
     shopt -s 'nullglob'
@@ -536,14 +611,13 @@ fix_firefox(){
   backup_instructions="$(prepare_backup_instructions)"
   chown --reference="${firefox_dir}/browser" -- "${firefox_dir}/browser/omni.ja"
   clear_firefox_caches
-  echo 'Your Firefox should now be able to run with an improved user experience!
-  Start Firefox and try it out.'
+  echo 'The tweaks should be applied now! Start Firefox and try it out.'
 }
 
 offer_backup_restore(){
   local restore_backup_reply=''
   
-  if [[ ! "${options[quiet]}" && "${is_interactive}" ]]; then
+  if [[ ! "${settings[quiet]}" && "${is_interactive}" ]]; then
     read -p 'Press [Enter] to exit. Press [r], then [Enter] to restore the backup. ' -r restore_backup_reply
   fi
   
