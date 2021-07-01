@@ -67,7 +67,7 @@ Also see [my Super User answer][super-user] for detailed steps.
 
 5. Execute the script.
    
-   * Interactively: Either click it in your file manager, then click the “Run in terminal” button, or run it directly as e.g. `bash ./fixfx-selection.sh`.
+   * Interactively: Either click it in your file manager, then click the “Run in terminal” button, or run it directly as e.g. `bash ./fixfx.sh`.
    * Non-interactively: Click it in your file manager, then click the “Run” button.
    
    Interactive execution is recommended.
@@ -184,40 +184,40 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 
 ### Examples
 
-We’ll assume that the script is callable via `./fixfx-selection.sh`.
+We’ll assume that the script is callable via `./fixfx.sh`.
 The exact path and file name depends on where you placed the file.
 
 * The following command fixes a specific Firefox installation located under `/usr/lib/firefox-de_DE` and creates an incremental backup of the original `omni.ja` in `/tmp`.
   The specified directory must contain a `browser/omni.ja`.
 
   ```sh
-  ./fixfx-selection.sh --firefox /usr/lib/firefox-de_DE
+  ./fixfx.sh --firefox /usr/lib/firefox-de_DE
   ```
 
 * This command fixes an automatically determined Firefox installation, while creating a backup of `browser/omni.ja` in the specified directory.
   The file names are incremental, e.g. `omni-0.ja~`, `omni-1.ja~`, etc.
 
   ```sh
-  ./fixfx-selection.sh -b /home/user/backups/my_backup_directory
+  ./fixfx.sh -b /home/user/backups/my_backup_directory
   ```
 
 * This command fixes an automatically determined Firefox installation, while creating a backup of `browser/omni.ja` at the specified file name (if its containing directory exists).
   The file is overwritten, if it exists.
 
   ```sh
-  ./fixfx-selection.sh -b /home/user/backups/my_omni_backup.ja~
+  ./fixfx.sh -b /home/user/backups/my_omni_backup.ja~
   ```
   
 * This command enables the behavior where double-clicking a URL bar selects the entire URL, but not a single click.
   
   ```sh
-  ./fixfx-selection.sh -o preventClickSelectsAll doubleClickSelectsAll
+  ./fixfx.sh -o preventClickSelectsAll doubleClickSelectsAll
   ```
   
-  If you want both and `preventClickSelectsAll` is the default in your script (see `./fixfx-selection.sh -h` to check), use this instead:
+  If you want both and `preventClickSelectsAll` is the default in your script (see `./fixfx.sh -h` to check), use this instead:
   
   ```sh
-  ./fixfx-selection.sh -o preventClickSelectsAll=false doubleClickSelectsAll
+  ./fixfx.sh -o preventClickSelectsAll=false doubleClickSelectsAll
   ```
 
 ## Exit status
@@ -235,7 +235,7 @@ Error codes (i.e. status codes greater than 0) are usually accompanied by an err
   [regression-bug]: https://bugzilla.mozilla.org/show_bug.cgi?id=333714
   [bug]: https://bugzilla.mozilla.org/show_bug.cgi?id=1621570
   [bugzilla-workaround]: https://bugzilla.mozilla.org/show_bug.cgi?id=1643973#c6
-  [sh]: https://raw.githubusercontent.com/SebastianSimon/firefox-selection-fix/master/fixfx-selection.sh
+  [sh]: https://raw.githubusercontent.com/SebastianSimon/firefox-selection-fix/master/fixfx.sh
   [linux]: https://www.archlinux.org/packages/core/x86_64/linux/
   [gnome-desktop]: https://www.archlinux.org/packages/extra/x86_64/gnome-desktop/
   [unzip]: https://www.archlinux.org/packages/extra/x86_64/unzip/
