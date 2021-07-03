@@ -89,7 +89,7 @@ is_option_key(){
   local -r option_name="${1}"
   
   case "${option_name}" in
-    '-b' | '--backup' | '-f' | '--firefox' | '-o' | '--option' | '--options')
+    '-b' | '--backup' | '-f' | '--firefox' | '-o' | '--option')
       return '0'
       ;;
   esac
@@ -118,7 +118,7 @@ assert_key_option_has_value(){
 show_usage(){
   echo "Usage: ${BASH_SOURCE[0]} [OPTION...]
 OPTIONs '-f', '--firefox', '-b', and '--backup' need a PATH value.
-OPTIONs '-o', '--option', and '--options' need a FIX_OPTION value.
+OPTIONs '-o' and '--option' need a FIX_OPTION value.
 Type '${BASH_SOURCE[0]} --help' for more information."
 }
 
@@ -130,10 +130,11 @@ OPTIONs:
   -f PATH, --firefox PATH    Pick PATH as the Firefox install path which is to
                                be fixed.
   
-  -o FIX_OPTION...,          Choose which tweaks to apply to omni.ja.
-  --option FIX_OPTION...,      FIX_OPTION... is a space-separated list of
-  --options FIX_OPTION...      FIX_OPTION_NAME or FIX_OPTION_NAME=false,
-                               turning tweaks on or off, respectively.
+  -o FIX_OPTION,             Choose which tweak to apply to omni.ja. FIX_OPTION
+  --option FIX_OPTION          is 'FIX_OPTION_KEY' or 'FIX_OPTION_KEY=' to
+                               turn a tweak on or off, respectively;
+                               FIX_OPTION can also be 'FIX_OPTION_KEY=VALUE',
+                               if a FIX_OPTION_KEY accepts a specific VALUE.
   
   -b PATH, --backup PATH     Store backup of internal Firefox file
                                'browser/omni.ja' in PATH; default: ${settings[backup_dir]@Q}.
@@ -144,7 +145,7 @@ OPTIONs:
   
   -h, -?, --help, --?        Show this help and exit.
 
-FIX_OPTION_NAMEs:
+FIX_OPTION_KEYs:
   autoSelectCopiesToClipboard
                              Copy selection to clipboard always when text in
                                the URL bar or search bar is selected, e.g.
@@ -183,7 +184,7 @@ Examples:
   ${BASH_SOURCE[0]} -b /home/user/backups/my_omni_backup.ja~
   
   # Like the double-click-selects-all behavior on the URL bar? Use this:
-  ${BASH_SOURCE[0]} -o preventClickSelectsAll doubleClickSelectsAll
+  ${BASH_SOURCE[0]} -o preventClickSelectsAll -o doubleClickSelectsAll
 
 Exit codes:
     0  Success
@@ -220,18 +221,14 @@ set_options(){
         settings[firefox_dir]="${2}"
         shift
         ;;
-      '-o' | '--option' | '--options')
+      '-o' | '--option')
+        if [[ "${2}" =~ \= ]]; then
+          settings["options|${2%%=*}"]="${2#*=}"
+        else
+          settings["options|${2}"]='on'
+        fi
+        
         shift
-
-        while [[ "${1-}" && ! "${1-}" =~ ^- ]]; do
-          if [[ "${1}" =~ ^.*=false$ ]]; then
-            settings["options|${1%=*}"]=""
-          else
-            settings["options|${1%=*}"]="on"
-          fi
-          
-          shift
-        done
         ;;
       '-h' | '-?' | '--help' | '--?')
         show_help
@@ -403,7 +400,7 @@ greet_and_apply_options(){
   
   for fix_option in "${!settings[@]}"; do
     if [[ "${fix_option}" =~ ^options\| && "${settings[${fix_option}]}" ]]; then
-      enabled_fix_options+=("${fix_option#options|}")
+      enabled_fix_options+=("${fix_option#options|}$([[ "${settings[${fix_option}]}" != 'on' ]] && echo "="${settings[${fix_option}]})")
     fi
   done
   

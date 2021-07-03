@@ -130,18 +130,20 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
   Omit this option to let the script find all `firefox` or `firefox-esr` paths on your system, validate them, and pick the one directory that is found.
   If more than one viable directory is found, the script will ask for selection of a specific directory (unless `-q` or `--quiet` is passed).
 
-* `-o FIX_OPTION...`, `--option FIX_OPTION...`, `--options FIX_OPTION...`
+* `-o FIX_OPTION`, `--option FIX_OPTION`
 
   Choose which functionality you want to change in the `omni.ja`.
-  `FIX_OPTION` can be one or more options; this flag can be used multiple times.
+  This flag can be used multiple times.
   
-  To turn the option `yourOptionHere` _off_, use `yourOptionHere=false` (e.g. `--option preventClickSelectsAll=false` or `-o preventClickSelectsAll=false`).
+  To turn the option `yourOptionHere` _off_, use `yourOptionHere=` (e.g. `--option preventClickSelectsAll=` or `-o preventClickSelectsAll=`).
+  This sets the option entry’s value to an empty string, which acts as a false value in Bash.
   
   To turn the option `yourOptionHere` _on_, just type `yourOptionHere` by itself, or with any other substring after `=` (e.g. `-o preventClickSelectsAll` or `-o preventClickSelectsAll=true`).
-  Note that an option name entry that doesn’t exactly end with `=false` is treated as `=true`.
   
-  To supply multiple option settings, use the flag multiple times or type the option names in a space-separated list (e.g. `-o optionA=false -o optionB` or `-o optionA=false optionB`).
-  Combining both is also possible.
+  To supply a custom value, use `yourOptionHere=yourValueHere`.
+  Note that there are currently no options which use a custom value.
+  
+  To supply multiple option settings, use the flag multiple times (e.g. `-o optionA= -o optionB`).
   
   See the [available options](#available-options) below.
   Unrecognized options are ignored.
@@ -174,13 +176,13 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 
 ### Available options
 
-| Option flag | Default | Description |
-|-------------|:-------:|-------------|
-| `--option preventClickSelectsAll`      | On  | Clicking the URL bar or the search bar no longer selects the entire input field. |
-| `--option doubleClickSelectsAll`       | Off | Double-clicking the URL bar or the search bar selects the entire input field. |
-| `--option autoSelectCopiesToClipboard` | Off | Certain actions trigger an automatic selection of text in the URL bar or the search bar which aren’t considered user-initiated and as such are not added to the selection clipboard (e.g. selected text which can be inserted with middle-click on Linux) — see [Bugzilla Bug 1653191][bugzilla-1653191]. This option enables clipboard selection for most cases: <kbd>Ctrl</kbd>+<kbd>L</kbd> or <kbd>F6</kbd> for URL bar selection; <kbd>Ctrl</kbd>+<kbd>K</kbd> for search bar selection; <kbd>Esc</kbd> to restore the original URL; <kbd>Tab</kbd> to focus either URL bar or search bar; or single-click or double-click selecting the entire text — if enabled. However, additional options must be passed if selection triggered by a tab switch should also be copied (`tabSwitchCopiesToClipboard`), and if selection triggered by URL auto-complete should be copied (`autoCompleteCopiesToClipboard`). |
-| `--option autoSelectCopiesToClipboard tabSwitchCopiesToClipboard` | Off | Enables selection clipboard as described in `autoSelectCopiesToClipboard`; also enables copying selection in URL bar triggered by switching to a tab with a focused URL bar (with either clicking or with <kbd>Ctrl</kbd>+(<kbd>Shift</kbd>)+<kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>Page Up</kbd>, <kbd>Ctrl</kbd>+<kbd>Page Down</kbd>, <kbd>Alt</kbd>+<kbd>1</kbd>..<kbd>9</kbd>, and possibly other ways). The option `tabSwitchCopiesToClipboard` without `autoSelectCopiesToClipboard` does nothing. |
-| `--option autoSelectCopiesToClipboard autoCompleteCopiesToClipboard` | Off | Enables selection clipboard as described in `autoSelectCopiesToClipboard`; also enables copying selection in URL bar triggered by typing a URL which is known by the browser (e.g. typing `gi` may autocomplete `github.com`, and the part `thub.com` is selected; the option enables automatically copying this selection to the clipboard). The option `autoCompleteCopiesToClipboard` without `autoSelectCopiesToClipboard` does nothing. |
+| Option flag                              | Default | Description |
+|------------------------------------------|:-------:|-------------|
+| `--option autoCompleteCopiesToClipboard` |   Off   | Enables selection clipboard as described in `autoSelectCopiesToClipboard`; also enables copying selection in URL bar triggered by typing a URL which is known by the browser (e.g. typing `gi` may autocomplete `github.com`, and the part `thub.com` is selected; the option enables automatically copying this selection to the clipboard). The option `autoCompleteCopiesToClipboard` requires `autoSelectCopiesToClipboard` to be set and is ignored without it. |
+| `--option autoSelectCopiesToClipboard`   |   Off   | <p>Certain actions trigger an automatic selection of text in the URL bar or the search bar which aren’t considered user-initiated and as such are not added to the selection clipboard (e.g. selected text which can be inserted with middle-click on Linux) — see <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1653191">Bugzilla Bug 1653191</a>.</p><p>This option enables clipboard selection for most cases: <kbd>Ctrl</kbd>+<kbd>L</kbd> or <kbd>F6</kbd> for URL bar selection; <kbd>Ctrl</kbd>+<kbd>K</kbd> for search bar selection; <kbd>Esc</kbd> to restore the original URL; <kbd>Tab</kbd> to focus either URL bar or search bar; or single-click or double-click selecting the entire text — if enabled.</p><p>However, additional options must be passed if selection triggered by a tab switch should also be copied (<code>tabSwitchCopiesToClipboard</code>), and if selection triggered by URL auto-complete should be copied (<code>autoCompleteCopiesToClipboard</code>).</p> |
+| `--option doubleClickSelectsAll`         |   Off   | Double-clicking the URL bar or the search bar selects the entire input field. |
+| `--option preventClickSelectsAll`        |   On    | Clicking the URL bar or the search bar no longer selects the entire input field. |
+| `--option tabSwitchCopiesToClipboard`    |   Off   | Enables copying selection in URL bar triggered by switching to a tab with a focused URL bar (with either clicking or with <kbd>Ctrl</kbd>+(<kbd>Shift</kbd>)+<kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>Page Up</kbd>, <kbd>Ctrl</kbd>+<kbd>Page Down</kbd>, <kbd>Alt</kbd>+<kbd>1</kbd>..<kbd>9</kbd>, and possibly other ways). The option `tabSwitchCopiesToClipboard` requires `autoSelectCopiesToClipboard` to be set and is ignored without it. |
 
 ### Examples
 
@@ -211,13 +213,13 @@ The exact path and file name depends on where you placed the file.
 * This command enables the behavior where double-clicking a URL bar selects the entire URL, but not a single click.
   
   ```sh
-  ./fixfx.sh -o preventClickSelectsAll doubleClickSelectsAll
+  ./fixfx.sh -o preventClickSelectsAll -o doubleClickSelectsAll
   ```
   
-  If you want both and `preventClickSelectsAll` is the default in your script (see `./fixfx.sh -h` to check), use this instead:
+  If you want _both_ click behaviors and `preventClickSelectsAll` is the default in your script (see `./fixfx.sh -h` to check), use this instead:
   
   ```sh
-  ./fixfx.sh -o preventClickSelectsAll=false doubleClickSelectsAll
+  ./fixfx.sh -o preventClickSelectsAll= -o doubleClickSelectsAll
   ```
 
 ## Exit status
@@ -241,4 +243,3 @@ Error codes (i.e. status codes greater than 0) are usually accompanied by an err
   [unzip]: https://www.archlinux.org/packages/extra/x86_64/unzip/
   [zip]: https://www.archlinux.org/packages/extra/x86_64/zip/
   [wiki-cache]: https://github.com/SebastianSimon/firefox-selection-fix/wiki/Careful-considerations-concerning-clearing-cache
-  [bugzilla-1653191]: https://bugzilla.mozilla.org/show_bug.cgi?id=1653191
