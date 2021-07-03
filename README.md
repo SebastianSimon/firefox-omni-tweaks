@@ -1,25 +1,6 @@
-# Firefox Selection Fix – Click will no longer select all in your URL bar
+# Firefox `omni.ja` tweaks
 
-_**Note:** Currently, the script and this repository are undergoing changes in scope. The newly introduced [options](#available-options) are the first step to generalize this script for various `omni.ja` tweaks, not just the `clickSelectsAll` behavior. Stay tuned._
-
----
-
-A script that disables the broken `clickSelectsAll` behavior of Firefox.
-
-See [this answer on Super User][super-user] for full context and an explanation of the script.
-
-## What is this script for?
-
-Various browsers have started adopting a particular behavior when clicking the address bar: the entire URL is selected.
-This goes against good UX practices.
-In Firefox, there used to be the preferences `browser.urlbar.clickSelectsAll`, `browser.urlbar.update1`, and `browser.urlbar.update2` to control this behavior and other updates, but the latter two were always expected to be temporary.
-
-Around March 2020, the [`browser.urlbar.clickSelectsAll` preference has been removed][regression-bug].
-Since then, this bug has been [under discussion][bug], where a patch has been suggested — this would involve recompiling Firefox from scratch.
-As the _“`clickSelectsAll` doesn’t work”_ duplicates accumulate on Bugzilla, one of these has received a [comment by Stephen McCarthy][bugzilla-workaround] which describes a workaround that involves editing internal Firefox files.
-This workaround looks like the simplest approach, but the approach doesn’t work as-is.
-
-This repo provides a script that attempts to give us users the `browser.urlbar.clickSelectsAll = false` experience back.
+A script that directly edits internal Firefox files stored in the `browser/omni.ja` archive to customize its behavior such as disabling `clickSelectsAll`, copying automatic URL bar selection to clipboard, etc.
 
 ## Where does this script work?
 
@@ -32,7 +13,7 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 81.0a1 (2020-08-20) through 91.0a1 (2021-07-01) (64-bit)
+* Firefox Nightly 91.0a1 (2020-07-01) through 91.0a1 (2021-07-02) (64-bit)
 <!-- * Firefox ESR 78 (64-bit) (assumed to work, not actually tested yet) -->
 * Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.12.13.arch1-2`)
 * Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:40.2-1`)
@@ -84,7 +65,7 @@ Also see [my Super User answer][super-user] for detailed steps.
    You can also run the script with `sudo` instead.
 8. A backup of the internal application resources (`browser/omni.ja`) of your Firefox installation is created (in `/tmp`, by default).
 9. After a few moments, you should be able to launch Firefox normally.
-   If everything went well, you should now be able to launch a fixed Firefox with an improved URL bar selection behavior (and search bar, too)!
+   If everything went well, you should now be able to launch a Firefox with an improved user experience!
    Press <kbd>Enter</kbd> to exit.
 10. However, if Firefox won’t run properly, close Firefox, and restore the backup by typing <kbd>r</kbd> and <kbd>Enter</kbd>.
     The backup will be restored and the script will exit.
@@ -232,14 +213,36 @@ Error codes (i.e. status codes greater than 0) are usually accompanied by an err
 * `2` for incorrect script usage: e.g. `--backup` or `--firefox` used without values, the specified Backup directory doesn’t point to a regular file or a target within an existing directory, the specified Firefox path is not a valid Firefox path, etc.
 * `130` if the script process was terminated (e.g. via <kbd>Ctrl</kbd>+<kbd>C</kbd>) or killed.
 
+---
+
+## A brief history of the scope of this repository
+
+See [this answer on Super User][super-user] for full context and an explanation of the script.
+The repo’s URL used to be `https://github.com/SebastianSimon/firefox-selection-fix`.
+
+Various browsers have started adopting a particular behavior when clicking the address bar: the entire URL is selected.
+This goes against good UX practices.
+In Firefox, there used to be the preferences `browser.urlbar.clickSelectsAll`, `browser.urlbar.update1`, and `browser.urlbar.update2` to control this behavior and other updates, but the latter two were always expected to be temporary.
+
+Around March 2020, the [`browser.urlbar.clickSelectsAll` preference has been removed][regression-bug].
+Since then, this bug has been [under discussion][bug], where a patch has been suggested — this would involve recompiling Firefox from scratch.
+As the _“`clickSelectsAll` doesn’t work”_ duplicates accumulate on Bugzilla to this day, one of these has received a [comment by Stephen McCarthy][bugzilla-workaround] which describes a workaround that involves editing internal Firefox files.
+This workaround looks like the simplest approach, but the approach didn’t work as-is.
+
+This repo provides a script that attempts to give us users the `browser.urlbar.clickSelectsAll = false` experience back.
+
+I realized the potential of this script: it could also be used to change _any_ aspect of Firefox’s behavior, not just this selection behavior.
+Indeed, several months later, some users have requested a few other features, so I started including new features and customization options.
+Since then, the repo has been renamed to its current name.
+
 
   [super-user]: https://superuser.com/a/1559926/751213
   [regression-bug]: https://bugzilla.mozilla.org/show_bug.cgi?id=333714
   [bug]: https://bugzilla.mozilla.org/show_bug.cgi?id=1621570
   [bugzilla-workaround]: https://bugzilla.mozilla.org/show_bug.cgi?id=1643973#c6
-  [sh]: https://raw.githubusercontent.com/SebastianSimon/firefox-selection-fix/master/fixfx.sh
+  [sh]: https://raw.githubusercontent.com/SebastianSimon/firefox-omni-tweaks/master/fixfx.sh
   [linux]: https://www.archlinux.org/packages/core/x86_64/linux/
   [gnome-desktop]: https://www.archlinux.org/packages/extra/x86_64/gnome-desktop/
   [unzip]: https://www.archlinux.org/packages/extra/x86_64/unzip/
   [zip]: https://www.archlinux.org/packages/extra/x86_64/zip/
-  [wiki-cache]: https://github.com/SebastianSimon/firefox-selection-fix/wiki/Careful-considerations-concerning-clearing-cache
+  [wiki-cache]: https://github.com/SebastianSimon/firefox-omni-tweaks/wiki/Careful-considerations-concerning-clearing-cache

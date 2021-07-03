@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2155
 
-# Script repo: https://github.com/SebastianSimon/firefox-selection-fix
+# Script repo: https://github.com/SebastianSimon/firefox-omni-tweaks
 
 set -o 'nounset'
 
@@ -193,7 +193,7 @@ Exit codes:
   130  Interrupt or kill signal received
 
 Script source, full documentation, bug reports at:
-  <https://github.com/SebastianSimon/firefox-selection-fix>"
+  <https://github.com/SebastianSimon/firefox-omni-tweaks>"
 }
 
 set_options(){
