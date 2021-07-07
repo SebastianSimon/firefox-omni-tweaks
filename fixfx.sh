@@ -9,8 +9,15 @@ readonly fallback_firefox_dir='/usr/lib/firefox' # Fallback path: put your Firef
 
 readonly description='The FixFx script tweaks Firefox. Make sure Firefox is up-to-date and closed.'
 readonly reason_already_root='already_root'
-readonly unpack_dir='/tmp/fixfx-omni'
 readonly absolute_bash_source="$(readlink --canonicalize -- "${BASH_SOURCE[0]}")"
+declare -A -r unpack_dirs=(
+  [omni]="/tmp/fixfx-omni"
+  [browser_omni]="/tmp/fixfx-browser_omni"
+)
+declare -A -r unpack_targets=(
+  [omni]='omni.ja'
+  [browser_omni]='browser/omni.ja'
+)
 declare -A -r formatting=(
   [red]="$(tput -- 'setaf' '9')"
   [yellow]="$(tput -- 'setaf' '11')"
@@ -29,12 +36,14 @@ declare -A settings=(
   [options|tabSwitchCopiesToClipboard]=''
   # End presets.
 )
-is_interactive=''
-valid_firefox_dirs=()
+declare -A backup_targets=(
+  [omni]=''
+  [browser_omni]=''
+)
 backup_instructions=''
-backup_target=''
-backup_dir=''
+valid_firefox_dirs=()
 firefox_dir=''
+is_interactive=''
 
 leave_terminal_window_open(){
   local executed_via_file_dialog=''
@@ -54,9 +63,13 @@ leave_terminal_window_open(){
 }
 
 cleanup(){
-  if [[ -d "${unpack_dir}" ]]; then
-    rm --force --recursive -- "${unpack_dir}"
-  fi
+  local unpack_dir
+  
+  for unpack_dir in "${unpack_dirs[@]}"; do
+    if [[ -d "${unpack_dir}" ]]; then
+      rm --force --recursive -- "${unpack_dir}"
+    fi
+  done
   
   if [[ "${backup_instructions}" ]]; then
     echo "${backup_instructions}"
@@ -66,7 +79,7 @@ cleanup(){
 terminate(){
   local -r status="${1}"
   
-  if [ "${status}" -gt '0' ]; then
+  if (("${status}" > 0)); then
     echo " Terminating." >&2
   fi
   
@@ -110,14 +123,14 @@ separate_flag_option_with_hyphen(){
 assert_key_option_has_value(){
   local -r option_name="${1}"
   
-  if is_option_key "${option_name}" && [ "${#}" -lt '2' ]; then
+  if is_option_key "${option_name}" && (("${#}" < 2)); then
     return '1'
   fi
 }
 
 show_usage(){
   echo "Usage: ${BASH_SOURCE[0]} [OPTION...]
-OPTIONs '-f', '--firefox', '-b', and '--backup' need a PATH value.
+OPTIONs '-f', '--firefox', '-b', and '--backup' need a DIR value.
 OPTIONs '-o' and '--option' need a FIX_OPTION value.
 Type '${BASH_SOURCE[0]} --help' for more information."
 }
@@ -127,7 +140,7 @@ show_help(){
 Various tweaks in the omni.ja file of your Firefox installation.
 
 OPTIONs:
-  -f PATH, --firefox PATH    Pick PATH as the Firefox install path which is to
+  -f DIR, --firefox DIR      Pick DIR as the Firefox install path which is to
                                be fixed.
   
   -o FIX_OPTION,             Choose which tweak to apply to omni.ja. FIX_OPTION
@@ -136,8 +149,10 @@ OPTIONs:
                                FIX_OPTION can also be 'FIX_OPTION_KEY=VALUE',
                                if a FIX_OPTION_KEY accepts a specific VALUE.
   
-  -b PATH, --backup PATH     Store backup of internal Firefox file
-                               'browser/omni.ja' in PATH; default: ${settings[backup_dir]@Q}.
+  -b DIR, --backup DIR       Store backup of internal Firefox files 'omni.ja'
+                               and 'browser/omni.ja' in DIR; directory is
+                               created if it doesn’t exist, but parent
+                               directory must exist; default: ${settings[backup_dir]@Q}.
   
   -q, --quiet                Do not log every step; do not ask for
                                confirmation; without -f, use the most recently
@@ -171,20 +186,16 @@ FIX_OPTION_KEYs:
 
 Examples:
   # Fix a specific Firefox installation located at '/usr/lib/firefox-de_DE'.
-  #   This directory must contain a 'browser/omni.ja'.
+  #   This directory must contain an 'omni.ja' and a 'browser/omni.ja'.
   ${BASH_SOURCE[0]} --firefox /usr/lib/firefox-de_DE
   
-  # Fix default Firefox installation and store backups of 'browser/omni.ja'
-  #   in the specified directory. The file names will be incremental, e.g.
-  #   'omni-0.ja~', 'omni-1.ja~', etc.
-  ${BASH_SOURCE[0]} -b /home/user/backups/my_backup_directory
-  
-  # In this case, the file name 'my_omni_backup.ja~' is used for the backup.
-  #   The file is overwritten, if it exists.
-  ${BASH_SOURCE[0]} -b /home/user/backups/my_omni_backup.ja~
+  # Fix default Firefox installation and store backups of 'omni.ja' and
+  #   'browser/omni.ja' in the specified directory. The file names will be
+  #   incremental, e.g. 'omni-0.ja~', 'omni-1.ja~', etc.
+  ${BASH_SOURCE[0]} -b /home/user/backups/my_firefox_backups
   
   # Like the double-click-selects-all behavior on the URL bar? Use this:
-  ${BASH_SOURCE[0]} -o preventClickSelectsAll -o doubleClickSelectsAll
+  ${BASH_SOURCE[0]}$([[ ! "${settings[options|preventClickSelectsAll]}" ]] && echo ' -o preventClickSelectsAll') -o doubleClickSelectsAll
 
 Exit codes:
     0  Success
@@ -197,7 +208,7 @@ Script source, full documentation, bug reports at:
 }
 
 set_options(){
-  while [ "${#}" -gt '0' ]; do
+  while (("${#}" > 0)); do
     if combined_short_options "${1}"; then
       set -- "${1:0:2}" "$(separate_flag_option_with_hyphen "${1:0:2}")${1:2}" "${@:2}"
     fi
@@ -245,15 +256,39 @@ set_options(){
 }
 
 check_root_required(){
+  declare -A checked_directories
+  local package_key
+  local path
+  
   if [ "$(id --user)" -eq '0' ]; then
     echo "${reason_already_root}"
     
     return
   fi
   
-  local path
+  for package_key in 'omni' 'browser_omni'; do
+    for path in "$(dirname -- unpack_dirs[${package_key}])" "$(dirname -- "${firefox_dir}/${unpack_targets[${package_key}]}")" "${firefox_dir}/${unpack_targets[${package_key}]}"; do
+      if [[ "${checked_directories[${path}]-}" ]]; then
+        continue
+      fi
+      
+      checked_directories["${path}"]='checked'
+      
+      if [[ ! -w "${path}" ]]; then
+        echo "${path}"
+        
+        return
+      fi
+    done
+  done
   
-  for path in "$(dirname -- "${unpack_dir}")" "${backup_target}" "${firefox_dir}/browser" "${firefox_dir}/browser/omni.ja"; do
+  for path in "${@}"; do
+    if [[ "${checked_directories[${path}]-}" ]]; then
+      continue
+    fi
+    
+    checked_directories["${path}"]='checked'
+    
     if [[ ! -w "${path}" ]]; then
       echo "${path}"
       
@@ -268,46 +303,36 @@ require_root(){
   fi
 }
 
-find_backup_target(){
-  local -r containing_dir="$(dirname -- "${settings[backup_dir]}")"
-  
-  if [[ ! -d "${containing_dir}" ]]; then
-    echo "${formatting[red]}Error: ${settings[backup_dir]@Q} is not an existing directory or a file within an existing directory.${formatting[reset]}" >&2
-    
-    return '2'
-  fi
-  
-  if [[ ! -e "${settings[backup_dir]}" ]]; then
-    echo "${containing_dir}"
-  elif [[ -d "${settings[backup_dir]}" || -f "${settings[backup_dir]}" ]]; then
-    echo "${settings[backup_dir]}"
+find_backup_dir(){
+  if [[ ! -e "${settings[backup_dir]}" && -d "$(dirname -- "${settings[backup_dir]}")" || -d "${settings[backup_dir]}" ]]; then
+    echo "$(readlink --canonicalize -- "${settings[backup_dir]}")"
   else
-    echo "${formatting[red]}Error: ${settings[backup_dir]@Q} is not a regular file.${formatting[reset]}" >&2
+    echo "${formatting[red]}Error: ${settings[backup_dir]@Q} has no parent directory or is not a directory itself.${formatting[reset]}" >&2
     
     return '2'
   fi
 }
 
 initialize_backup_target(){
-  find_backup_target 1>'/dev/null' || return "${?}"
+  local prefix="${1}"
+  local -r start="${settings[backup_dir]}/${prefix}-"
+  local -r end='.ja~'
+  local incremental_number='0'
   
-  if [[ -d "${settings[backup_dir]}" ]]; then
-    local -r start="${settings[backup_dir]}/omni-"
-    local -r end='.ja~'
-    local incremental_number='0'
-    
-    while ! (
-      set -o noclobber
-      echo -n '' >"${start}${incremental_number}${end}"
-    ) 2>'/dev/null'; do
-      ((incremental_number++))
-    done
-    
-    echo "${start}${incremental_number}${end}"
-  else
-    touch -- "${settings[backup_dir]}"
-    echo "${settings[backup_dir]}"
+  if [[ ! -e "${settings[backup_dir]}" && -d "$(dirname -- "${settings[backup_dir]}")" ]]; then
+    mkdir "${settings[backup_dir]}"
   fi
+  
+  find_backup_dir 1>'/dev/null' || return "${?}"
+  
+  while ! (
+    set -o noclobber
+    echo -n '' >"${start}${incremental_number}${end}"
+  ) 2>'/dev/null'; do
+    ((incremental_number++))
+  done
+  
+  echo "$(readlink --canonicalize -- "${start}${incremental_number}${end}")"
 }
 
 choose_firefox_path(){
@@ -330,6 +355,10 @@ choose_firefox_path(){
 }
 
 find_firefox_path(){
+  local add_fallback_path='true'
+  local current_firefox_dir=''
+  local most_recently_updated
+  
   if [[ "${settings[firefox_dir]}" ]]; then
     if [[ -f "${settings[firefox_dir]}/browser/omni.ja" ]]; then
       firefox_dir="${settings[firefox_dir]}"
@@ -343,8 +372,6 @@ find_firefox_path(){
     return '2'
   fi
   
-  local add_fallback_path='true'
-  local current_firefox_dir=''
   mapfile -t available_firefox_dirs < <(printf "%s" "$(whereis -b 'firefox' 'firefox-esr' | sed --regexp-extended --expression='s/^.*?:\s*//g' | xargs | tr ' ' '\n')")
   
   for current_firefox_dir in "${available_firefox_dirs[@]}"; do
@@ -379,8 +406,6 @@ find_firefox_path(){
   
   current_firefox_dir=''
   
-  local most_recently_updated
-  
   if [[ "${settings[quiet]}" || ! "${is_interactive}" ]]; then
     for most_recently_updated in "${valid_firefox_dirs[@]}"; do
       if [[ "${most_recently_updated}/browser/omni.ja" -nt "${current_firefox_dir}/browser/omni.ja" ]]; then
@@ -396,11 +421,13 @@ greet_and_apply_options(){
   local firefox_path_chosen=''
   local needs_confirm_description_read=''
   local enabled_fix_options=()
+  local backup_dir
   local fix_option
+  local package_key
   
   for fix_option in "${!settings[@]}"; do
     if [[ "${fix_option}" =~ ^options\| && "${settings[${fix_option}]}" ]]; then
-      enabled_fix_options+=("${fix_option#options|}$([[ "${settings[${fix_option}]}" != 'on' ]] && echo "="${settings[${fix_option}]})")
+      enabled_fix_options+=("${fix_option#options|}$([[ "${settings[${fix_option}]}" != 'on' ]] && echo "=${settings[${fix_option}]}")")
     fi
   done
   
@@ -441,12 +468,15 @@ greet_and_apply_options(){
     if [[ ! "${firefox_path_chosen}" ]]; then
       echo "Firefox location: ${firefox_dir@Q}"
     fi
-    
-    backup_target="$(find_backup_target)" || terminate "${?}"
-    readonly backup_target
   fi
   
-  root_required_reason="$(check_root_required)"
+  backup_dir="$(find_backup_dir)" || terminate "${?}"
+  
+  if [[ ! -e "${backup_dir}" ]]; then
+    backup_dir="$(dirname -- "${backup_dir}")"
+  fi
+  
+  root_required_reason="$(check_root_required "${backup_dir}")"
   
   if [[ "${root_required_reason}" && "${root_required_reason}" != "${reason_already_root}" ]]; then
     echo "Continue as root: write access to ${root_required_reason@Q} is required."
@@ -456,9 +486,12 @@ greet_and_apply_options(){
     needs_confirm_description_read='true'
   fi
   
-  backup_dir="$(initialize_backup_target)" || terminate "${?}"
-  readonly backup_dir
-  echo "Backup location: ${backup_dir@Q}"
+  for package_key in "${!backup_targets[@]}"; do
+    backup_targets["${package_key}"]="$(initialize_backup_target "${package_key}")" || terminate "${?}"
+  done
+  
+  readonly backup_targets
+  echo "Backup locations: ${backup_targets[omni]@Q} and ${backup_targets[browser_omni]@Q}"
   
   if [[ "${needs_confirm_description_read}" ]]; then
     read -p "Press [Enter] to continue. " -r
@@ -466,12 +499,13 @@ greet_and_apply_options(){
 }
 
 unzip_without_expected_errors(){
-  local -r unzip_errors="$(unzip -d "${unpack_dir}" -o -qq -- "${firefox_dir}/browser/omni.ja" 2>&1)"
+  local -r package_key="${1}"
+  local -r unzip_errors="$(unzip -d "${unpack_dirs[${package_key}]}" -o -qq -- "${firefox_dir}/${unpack_targets[${package_key}]}" 2>&1)"
   local -r expected_errors='^warning.+?\[.*?omni\.ja\]:.+?[1-9][0-9]*.+?extra.+?bytes.+?attempting.+?anyway.+?error.+?\[.*?omni\.ja\]:.+?reported.+?length.+?-[1-9][0-9]*.+?bytes.+?long.+?Compensating\.{3}(.+[0-9]+.+archive.+error.+)?$'
   
   if ! (
     shopt -s 'nullglob'
-    unzipped_files=("${unpack_dir}/"*)
+    unzipped_files=("${unpack_dirs[${package_key}]}/"*)
     ((${#unzipped_files[@]}))
   ); then
     echo
@@ -491,22 +525,22 @@ unzip_without_expected_errors(){
 
 edit_file(){
   local -r purpose="${1}"
-  local -r input_file="${2}"
+  local -r package_key="${2}"
+  local -r input_file="${3}"
+  local -r fixed_file="${unpack_dirs[${package_key}]}/${input_file}"
+  local -r fixed_flag_file="$(dirname -- "${fixed_file}")/.$(basename -- "${fixed_file}").${purpose}"
+  local regex
+  local regexes=()
+  local regex_index='1'
+  local match_index='1'
   
-  shift 2
-  
-  local -r fixed_flag_file="$(dirname -- "${unpack_dir}/${input_file}")/.$(basename -- "${unpack_dir}/${input_file}").${purpose}"
+  shift 3
   
   if (("${#@}" == 0)); then
     touch -- "${fixed_flag_file}"
     
     return
   fi
-  
-  local regex
-  local regexes=()
-  local regex_index='1'
-  local match_index='1'
   
   for regex in "${@}"; do
     regexes+=("--expression=${regex} w ${fixed_flag_file}.${regex_index}")
@@ -517,7 +551,7 @@ edit_file(){
     return
   fi
   
-  sed --in-place --regexp-extended "${regexes[@]}" "${unpack_dir}/${input_file}" \
+  sed --in-place --regexp-extended "${regexes[@]}" "${fixed_file}" \
     && touch -- "${fixed_flag_file}"
 
   while (("${match_index}" < "${regex_index}")); do
@@ -534,44 +568,45 @@ edit_file(){
 
 edit_and_lock_based_on_options(){
   if [[ "${settings[options|preventClickSelectsAll]-}" ]]; then
-    edit_file 'preventClickSelectsAll' 'modules/UrlbarInput.jsm' 's/(this\._preventClickSelectsAll = )this\.focused;/\1true;/'
-    edit_file 'preventClickSelectsAll' 'chrome/browser/content/browser/search/searchbar.js' 's/(this\._preventClickSelectsAll = )this\._textbox\.focused;/\1true;/'
+    edit_file 'preventClickSelectsAll' 'browser_omni' 'modules/UrlbarInput.jsm' 's/(this\._preventClickSelectsAll = )this\.focused;/\1true;/'
+    edit_file 'preventClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/(this\._preventClickSelectsAll = )this\._textbox\.focused;/\1true;/'
   fi
 
   if [[ "${settings[options|doubleClickSelectsAll]-}" ]]; then
-    edit_file 'doubleClickSelectsAll' 'modules/UrlbarInput.jsm' 's/(if \(event\.target\.id == SEARCH_BUTTON_ID\) \{)/if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        } else \1/'
-    edit_file 'doubleClickSelectsAll' 'chrome/browser/content/browser/search/searchbar.js' '/this\.addEventListener\("mousedown", event => \{/,/\}\);/ s/(\}\);)/        \n        if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        }\n      \1/'
+    edit_file 'doubleClickSelectsAll' 'browser_omni' 'modules/UrlbarInput.jsm' 's/(if \(event\.target\.id == SEARCH_BUTTON_ID\) \{)/if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        } else \1/'
+    edit_file 'doubleClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' '/this\.addEventListener\("mousedown", event => \{/,/\}\);/ s/(\}\);)/        \n        if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        }\n      \1/'
   fi
   
   if [[ "${settings[options|autoSelectCopiesToClipboard]-}" ]]; then
-    edit_file 'autoSelectCopiesToClipboard' 'modules/UrlbarInput.jsm' 's/(_on_select\(event\) \{)/\1\n    this.window.fixfx_isOpeningLocation = false;\n    /' \
+    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'modules/UrlbarInput.jsm' 's/(_on_select\(event\) \{)/\1\n    this.window.fixfx_isOpeningLocation = false;\n    /' \
       's/(this\._suppressPrimaryAdjustment = )true;/\1false;/' \
       's/(this\.inputField\.select\(\);)/\1\n    \n    if(this.window.fixfx_isOpeningLocation){\n      this._on_select({\n        detail: {\n          fixfx_openingLocationCall: true\n        }\n      });\n    }\n    /'
-    edit_file 'autoSelectCopiesToClipboard' 'chrome/browser/content/browser/browser.js' '/function openLocation/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isOpeningLocation = true;\n    \1/' \
+    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/browser.js' '/function openLocation/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isOpeningLocation = true;\n    \1/' \
       's/^(\s*searchBar\.select\(\);)$/      window.fixfx_isOpeningSearch = true;\n\1/'
-    edit_file 'autoSelectCopiesToClipboard' 'chrome/browser/content/browser/tabbrowser.js' '/_adjustFocusAfterTabSwitch\(newTab\) \{/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isSwitchingTab = true;\n          \1/'
-    edit_file 'autoSelectCopiesToClipboard' 'chrome/browser/content/browser/search/searchbar.js' 's/^\{$/{\n  XPCOMUtils.defineLazyServiceGetter(this, "ClipboardHelper", "@mozilla.org\/widget\/clipboardhelper;1", "nsIClipboardHelper");\n  /' \
+    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/tabbrowser.js' '/_adjustFocusAfterTabSwitch\(newTab\) \{/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isSwitchingTab = true;\n          \1/'
+    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/^\{$/{\n  XPCOMUtils.defineLazyServiceGetter(this, "ClipboardHelper", "@mozilla.org\/widget\/clipboardhelper;1", "nsIClipboardHelper");\n  /' \
       's/(this\._textbox\.select\(\);)/\1\n      \n      if(window.fixfx_isOpeningSearch){\n        this.textbox.dispatchEvent(new Event("select"));\n      }/' \
       's/(_setupTextboxEventListeners\(\) \{)/\1\n      this.textbox.addEventListener("select", () => {\n        window.fixfx_isOpeningSearch = false;\n        \n        if(this.value \&\& Services.clipboard.supportsSelectionClipboard()){\n          ClipboardHelper.copyStringToClipboard(this.value, Services.clipboard.kSelectionClipboard);\n        }\n      });\n      /'
     
     if [[ "${settings[options|tabSwitchCopiesToClipboard]-}" ]]; then
-      edit_file 'tabSwitchCopiesToClipboard' 'modules/UrlbarInput.jsm' 's/^\s*!this\.window\.windowUtils\.isHandlingUserInput \|\|$//'
+      edit_file 'tabSwitchCopiesToClipboard' 'browser_omni' 'modules/UrlbarInput.jsm' 's/^\s*!this\.window\.windowUtils\.isHandlingUserInput \|\|$//'
     else
-      edit_file 'tabSwitchCopiesToClipboard' 'modules/UrlbarInput.jsm' 's/(_on_select\(event\) \{)/\1\n    if(event?.detail?.fixfx_openingLocationCall){\n      this.window.fixfx_isSwitchingTab = false;\n    }\n    \n    const fixfx_isSwitchingTab = this.window.fixfx_isSwitchingTab;\n    \n    if(this.window.fixfx_isSwitchingTab){\n      this.window.setTimeout(() => this.window.setTimeout(() => this.window.fixfx_isSwitchingTab = false));\n    }\n    /' \
+      edit_file 'tabSwitchCopiesToClipboard' 'browser_omni' 'modules/UrlbarInput.jsm' 's/(_on_select\(event\) \{)/\1\n    if(event?.detail?.fixfx_openingLocationCall){\n      this.window.fixfx_isSwitchingTab = false;\n    }\n    \n    const fixfx_isSwitchingTab = this.window.fixfx_isSwitchingTab;\n    \n    if(this.window.fixfx_isSwitchingTab){\n      this.window.setTimeout(() => this.window.setTimeout(() => this.window.fixfx_isSwitchingTab = false));\n    }\n    /' \
         's/!this\.window\.windowUtils\.isHandlingUserInput \|\|/fixfx_isSwitchingTab ||/'
     fi
     
     if [[ ! "${settings[options|autoCompleteCopiesToClipboard]-}" ]]; then
-      edit_file 'autoCompleteCopiesToClipboard' 'modules/UrlbarInput.jsm' '/_on_select\(event\) \{/,/ClipboardHelper/ s/(if \(!val)\)/\1 || !this.window.windowUtils.isHandlingUserInput \&\& val !== this.inputField.value \&\& this.inputField.value.endsWith(val))/'
+      edit_file 'autoCompleteCopiesToClipboard' 'browser_omni' 'modules/UrlbarInput.jsm' '/_on_select\(event\) \{/,/ClipboardHelper/ s/(if \(!val)\)/\1 || !this.window.windowUtils.isHandlingUserInput \&\& val !== this.inputField.value \&\& this.inputField.value.endsWith(val))/'
     fi
   fi
 }
 
 prepare_backup_instructions(){
-  echo 'You can restore the backup later on by typing these two commands:'
-  echo "${formatting[cyan]}cp -p ${backup_dir@Q} '${firefox_dir}/browser/omni.ja'"
+  echo 'You can restore the backup later on by typing these three commands:'
+  echo "${formatting[cyan]}cp -p ${backup_targets[omni]@Q} '${firefox_dir}/${unpack_targets[omni]}'"
+  echo "cp -p ${backup_targets[browser_omni]@Q} '${firefox_dir}/${unpack_targets[browser_omni]}'"
   echo "touch '${firefox_dir}/browser/.purgecaches'${formatting[reset]}"
-  echo "You can also copy the file ${backup_dir@Q} to another backup location."
+  echo "You can also copy the two files in '$(find_backup_dir)' to another backup location."
 }
 
 clear_firefox_caches(){
@@ -594,38 +629,54 @@ clear_firefox_caches(){
 }
 
 fix_firefox(){
-  cp --preserve -- "${firefox_dir}/browser/omni.ja" "${backup_dir}" \
-    && echo "Copying '${firefox_dir}/browser/omni.ja' to ${backup_dir@Q}."
+  local package_key
+  
+  for package_key in "${!unpack_targets[@]}"; do
+    cp --preserve -- "${firefox_dir}/${unpack_targets[${package_key}]}" "${backup_targets[${package_key}]}" \
+      && echo "Copying '${firefox_dir}/${unpack_targets[${package_key}]}' to ${backup_targets[${package_key}]@Q}."
+  done
+  
   echo "Fixing Firefox…"
-  mkdir -- "${unpack_dir}" || terminate '1'
-  unzip_without_expected_errors || terminate "${?}"
+  
+  for package_key in "${!unpack_dirs[@]}"; do
+    mkdir -- "${unpack_dirs[${package_key}]}" || terminate '1'
+    unzip_without_expected_errors "${package_key}" || terminate "${?}"
+  done
+  
   edit_and_lock_based_on_options
-  (
-    cd -- "${unpack_dir}" || terminate '1'
-    zip -0 --no-dir-entries --quiet --recurse-paths --strip-extra omni.ja -- './'*
-  )
-  mv -- "${unpack_dir}/omni.ja" "${firefox_dir}/browser/omni.ja" || terminate '1'
+  
+  for package_key in "${!unpack_dirs[@]}"; do
+    (
+      cd -- "${unpack_dirs[${package_key}]}" || terminate '1'
+      zip -0 --no-dir-entries --quiet --recurse-paths --strip-extra omni.ja -- './'*
+    )
+    mv -- "${unpack_dirs[${package_key}]}/omni.ja" "${firefox_dir}/${unpack_targets[${package_key}]}" || terminate '1'
+    chown --reference="$(dirname -- "${firefox_dir}/${unpack_targets[${package_key}]}")" -- "${firefox_dir}/${unpack_targets[${package_key}]}"
+  done
+  
   backup_instructions="$(prepare_backup_instructions)"
-  chown --reference="${firefox_dir}/browser" -- "${firefox_dir}/browser/omni.ja"
   clear_firefox_caches
   echo 'The tweaks should be applied now! Start Firefox and try it out.'
 }
 
 offer_backup_restore(){
   local restore_backup_reply=''
+  local package_key
   
   if [[ ! "${settings[quiet]}" && "${is_interactive}" ]]; then
     read -p 'Press [Enter] to exit. Press [r], then [Enter] to restore the backup. ' -r restore_backup_reply
   fi
   
   if [[ "${restore_backup_reply}" =~ [Rr] ]]; then
-    if [[ -f "${backup_dir}" ]]; then
-      cp --preserve -- "${backup_dir}" "${firefox_dir}/browser/omni.ja" \
-        && echo "Copying ${backup_dir@Q} to '${firefox_dir}/browser/omni.ja'."
-      clear_firefox_caches
-    else
-      echo "The original backup at ${backup_dir@Q} no longer exists."
-    fi
+    for package_key in "${!backup_targets[@]}"; do
+      if [[ -f "${backup_targets[${package_key}]}" ]]; then
+        cp --preserve -- "${backup_targets[${package_key}]}" "${firefox_dir}/${unpack_targets[${package_key}]}" \
+          && echo "Copying ${backup_targets[${package_key}]@Q} to '${firefox_dir}/${unpack_targets[${package_key}]}'."
+        clear_firefox_caches
+      else
+        echo "The original backup at ${backup_targets[${package_key}]@Q} no longer exists."
+      fi
+    done
   else
     echo "${backup_instructions}"
   fi

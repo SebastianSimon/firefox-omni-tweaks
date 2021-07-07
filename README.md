@@ -1,6 +1,6 @@
 # Firefox `omni.ja` tweaks
 
-A script that directly edits internal Firefox files stored in the `browser/omni.ja` archive to customize its behavior such as disabling `clickSelectsAll`, copying automatic URL bar selection to clipboard, etc.
+A script that directly edits the internal Firefox files stored in the `omni.ja` and `browser/omni.ja` archives to customize the behavior of Firefox such as disabling `clickSelectsAll`, copying automatic URL bar selection to clipboard, etc.
 
 ## Where does this script work?
 
@@ -13,7 +13,7 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 91.0a1 (2020-07-01) through 91.0a1 (2021-07-02) (64-bit)
+* Firefox Nightly 91.0a1 (2020-07-01) through 91.0a1 (2021-07-07) (64-bit)
 <!-- * Firefox ESR 78 (64-bit) (assumed to work, not actually tested yet) -->
 * Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.12.13.arch1-2`)
 * Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:40.2-1`)
@@ -28,7 +28,7 @@ _Note: the versions will only be updated for substantial changes to the script._
 The script applies changes to a specific Firefox install path; it needs to be executed after each update of that Firefox install path.
 It should not be executed a second time before another Firefox update.
 
-The script automatically modifies the `browser/omni.ja` file, and clears the browser’s startup cache and creates a `.purgecaches` file, in order to assure that the changes are properly applied when starting Firefox.
+The script automatically modifies the `omni.ja` file and the `browser/omni.ja` file, and clears the browser’s startup cache and creates a `.purgecaches` file, in order to assure that the changes are properly applied when starting Firefox.
 
 This step-by-step guide describes default script execution, i.e. without any options passed; you can pass [options](#options-in-detail) listed below.
 
@@ -63,7 +63,7 @@ Also see [my Super User answer][super-user] for detailed steps.
 7. The script checks if you have write access to all relevant directories: the Firefox install path, the backup path, and `/tmp`, where the unzipping happens.
    If not, you’ll be asked to enter your root password.
    You can also run the script with `sudo` instead.
-8. A backup of the internal application resources (`browser/omni.ja`) of your Firefox installation is created (in `/tmp`, by default).
+8. A backup of the internal application resources (`omni.ja` and `browser/omni.ja`) of your Firefox installation is created (in `/tmp`, by default).
 9. After a few moments, you should be able to launch Firefox normally.
    If everything went well, you should now be able to launch a Firefox with an improved user experience!
    Press <kbd>Enter</kbd> to exit.
@@ -74,7 +74,7 @@ Also see [my Super User answer][super-user] for detailed steps.
 Let me know if something went wrong by creating a new issue.
 Provide details about terminal output, your system setup, and your software versions.
 
-Since this script partially relies on Firefox making sure to use the newly changed `browser/omni.ja`, as opposed to a cached `omni.ja` file, additional care must be taken to make issues reproducible.
+Since this script partially relies on Firefox making sure to use the newly changed `omni.ja` and `browser/omni.ja`, as opposed to a cached version of these files, additional care must be taken to make issues reproducible.
 See the [wiki about the startup cache][wiki-cache] to gain insight into the cache clearing mechanism.
 
 You may some day receive a warning about a pattern failing to match due to the original Firefox code having changed.
@@ -89,10 +89,11 @@ If you need to restore the backup later on, you can type commands into the termi
 Check if you need to run this as root, and _double-check_ the file paths.
 
 ```sh
-firefox_dir=$(whereis -b firefox | cut -d ' ' -f 2)  # Or put the correct path here, like the `Fallback path` line in the script.
-                                                     # `cut -d ' ' -f 2` just takes the first path found, which may not be the right one.
-cp -p /tmp/omni-n.ja~ "$firefox_dir/browser/omni.ja" # Replace `n` by the incremental number of the backup file name.
-touch "$firefox_dir/browser/.purgecaches"
+firefox_dir=$(whereis -b firefox | cut -d ' ' -f 2)          # Or put the correct path here, like the `Fallback path` line in the script.
+                                                             # `cut -d ' ' -f 2` just takes the first path found, which may not be the right one.
+cp -p /tmp/omni-n.ja~ "$firefox_dir/omni.ja"                 # Replace `n` by the incremental number of the backup file name.
+cp -p /tmp/browser_omni-n.ja~ "$firefox_dir/browser/omni.ja" # Replace `n` by the incremental number of the backup file name.
+touch "$firefox_dir/browser/.purgecaches"                    # This is necessary only here. A "$firefox_dir/.purgecaches" is ignored.
 ```
 
 ## Options in detail
@@ -101,11 +102,11 @@ As usual, short options can be combined, e.g. `-qb '/tmp'` which expands into `-
 A `--` marks the end of options, meaning every option after that will be ignored.
 There are no positional arguments for this script, so in fact, after `--`, _everything_ is ignored.
 
-* `-f PATH`, `--firefox PATH`
+* `-f DIR`, `--firefox DIR`
 
-  Picks `PATH` as the Firefox install path that is to be fixed.
+  Picks `DIR` as the Firefox install path that is to be fixed.
   
-  Note that `PATH` must include a `browser/omni.ja` file.
+  Note that `DIR` must include a `browser/omni.ja` file. <!-- The script currently really only checks for `browser/omni.ja`, but not `omni.ja`. I could change this, but it’s not strictly necessary. -->
   If this validation fails, the script terminates.
   
   Omit this option to let the script find all `firefox` or `firefox-esr` paths on your system, validate them, and pick the one directory that is found.
@@ -113,7 +114,7 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 
 * `-o FIX_OPTION`, `--option FIX_OPTION`
 
-  Choose which functionality you want to change in the `omni.ja`.
+  Choose which functionality you want to change in the internal files.
   This flag can be used multiple times.
   
   To turn the option `yourOptionHere` _off_, use `yourOptionHere=` (e.g. `--option preventClickSelectsAll=` or `-o preventClickSelectsAll=`).
@@ -129,17 +130,17 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
   See the [available options](#available-options) below.
   Unrecognized options are ignored.
 
-* `-b PATH`, `--backup PATH`
+* `-b DIR`, `--backup DIR`
 
-  Stores backup of internal Firefox file `browser/omni.ja` in `PATH`.
+  Stores backup of internal Firefox files `omni.ja` and `browser/omni.ja` in `DIR`.
   
-  If `PATH` points to a directory, an incremental file name like `omni-0.ja~`, `omni-1.ja~`, etc. is used within that directory.
+  `DIR` must either point to an existing directory, or its parent directory must exist.
+  `DIR` pointing to anything other than a directory is not allowed.
+  One directory is automatically created if not yet existing.
   
-  If `PATH` points to an existing file, the file is overwritten with the backup.
+  Incremental files like `omni-0.ja~`, `omni-1.ja~`, etc., and `browser_omni-0.ja~`, `browser_omni-1.ja~`, etc. are created within that directory.
   
-  If the path name of `PATH` (without the file name) points to a directory, but the file name doesn’t point to an existing file, the backup is stored with that file name.
-  
-  Omitting this option defaults to `/tmp` with incremental backups.
+  Omitting this option defaults to backups being stored in `/tmp`.
 
 * `-q`, `--quiet`
 
@@ -154,6 +155,7 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 * `-h`, `-?`, `--help`, `--?`
 
   If this option is present, the help information is printed, and the script exits.
+  The help text contains contextual information such as the path name of the script source, the default options, etc.
 
 ### Available options
 
@@ -177,20 +179,13 @@ The exact path and file name depends on where you placed the file.
   ./fixfx.sh --firefox /usr/lib/firefox-de_DE
   ```
 
-* This command fixes an automatically determined Firefox installation, while creating a backup of `browser/omni.ja` in the specified directory.
+* This command fixes an automatically determined Firefox installation, while creating a backup of `omni.ja` and `browser/omni.ja` in the specified directory.
   The file names are incremental, e.g. `omni-0.ja~`, `omni-1.ja~`, etc.
 
   ```sh
-  ./fixfx.sh -b /home/user/backups/my_backup_directory
+  ./fixfx.sh -b /home/user/backups/my_firefox_backups
   ```
 
-* This command fixes an automatically determined Firefox installation, while creating a backup of `browser/omni.ja` at the specified file name (if its containing directory exists).
-  The file is overwritten, if it exists.
-
-  ```sh
-  ./fixfx.sh -b /home/user/backups/my_omni_backup.ja~
-  ```
-  
 * This command enables the behavior where double-clicking a URL bar selects the entire URL, but not a single click.
   
   ```sh
@@ -210,7 +205,7 @@ Error codes (i.e. status codes greater than 0) are usually accompanied by an err
 
 * `0` for success: everything went as expected, the script terminated successfully.
 * `1` for general failure due to utilities used in the script: e.g. some file was not found, some directory could not be created, directory navigation failed, unzipping or zipping the `omni.ja` failed, read or write permissions could not be granted, etc.
-* `2` for incorrect script usage: e.g. `--backup` or `--firefox` used without values, the specified Backup directory doesn’t point to a regular file or a target within an existing directory, the specified Firefox path is not a valid Firefox path, etc.
+* `2` for incorrect script usage: e.g. `--backup`, `--firefox`, or `--option` used without values, the specified Backup directory isn’t an existing directory, the specified Firefox path is not a valid Firefox path, etc.
 * `130` if the script process was terminated (e.g. via <kbd>Ctrl</kbd>+<kbd>C</kbd>) or killed.
 
 ---
