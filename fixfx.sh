@@ -34,6 +34,7 @@ declare -A settings=(
   [options|autoSelectCopiesToClipboard]=''
   [options|autoCompleteCopiesToClipboard]=''
   [options|tabSwitchCopiesToClipboard]=''
+  [options|secondsSeekedByKeyboard]=''
   # End presets.
 )
 declare -A backup_targets=(
@@ -110,6 +111,18 @@ is_option_key(){
   return '1'
 }
 
+fix_option_default_value(){
+  local -r fix_key="${1}"
+  
+  case "${fix_key}" in
+    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
+      echo 'on'
+      ;;
+    *)
+      echo ''
+  esac
+}
+
 separate_flag_option_with_hyphen(){
   local -r option_name="${1}"
   
@@ -147,7 +160,7 @@ OPTIONs:
   --option FIX_OPTION          is 'FIX_OPTION_KEY' or 'FIX_OPTION_KEY=' to
                                turn a tweak on or off, respectively;
                                FIX_OPTION can also be 'FIX_OPTION_KEY=VALUE',
-                               if a FIX_OPTION_KEY accepts a specific VALUE.
+                               if a FIX_OPTION_KEY requires a specific VALUE.
   
   -b DIR, --backup DIR       Store backup of internal Firefox files 'omni.ja'
                                and 'browser/omni.ja' in DIR; directory is
@@ -178,6 +191,11 @@ FIX_OPTION_KEYs:
   
   preventClickSelectsAll     Clicking the URL bar or the search bar no longer
                                selects the entire input field; ${settings[options|preventClickSelectsAll]:-off} by default.
+  
+  secondsSeekedByKeyboard
+                             Seeking by keyboard controls in the default video
+                               player or in the PiP mode (using [←] or [→])
+                               will seek by VALUE seconds; default: ${settings[options|autoCompleteCopiesToClipboard]:-no change}.
   
   tabSwitchCopiesToClipboard
                              Requires autoSelectCopiesToClipboard. Also copies
@@ -236,7 +254,7 @@ set_options(){
         if [[ "${2}" =~ \= ]]; then
           settings["options|${2%%=*}"]="${2#*=}"
         else
-          settings["options|${2}"]='on'
+          settings["options|${2}"]="$(fix_option_default_value "${2}")"
         fi
         
         shift
@@ -598,6 +616,11 @@ edit_and_lock_based_on_options(){
     if [[ ! "${settings[options|autoCompleteCopiesToClipboard]-}" ]]; then
       edit_file 'autoCompleteCopiesToClipboard' 'browser_omni' 'modules/UrlbarInput.jsm' '/_on_select\(event\) \{/,/ClipboardHelper/ s/(if \(!val)\)/\1 || !this.window.windowUtils.isHandlingUserInput \&\& val !== this.inputField.value \&\& this.inputField.value.endsWith(val))/'
     fi
+  fi
+  
+  if [[ "${settings[options|secondsSeekedByKeyboard]-}" ]]; then
+    edit_file 'secondsSeekedByKeyboard' 'omni' 'chrome/toolkit/content/global/elements/videocontrols.js' "s/(newval = oldval [+-]) 15;/\1 ${settings[options|secondsSeekedByKeyboard]-}/"
+    edit_file 'secondsSeekedByKeyboard' 'omni' 'actors/PictureInPictureChild.jsm' "s/(newval = oldval [+-]) 15;/\1 ${settings[options|secondsSeekedByKeyboard]-}/"
   fi
 }
 
