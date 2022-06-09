@@ -30,6 +30,7 @@ declare -A settings=(
   [firefox_dir]=''
   [backup_dir]='/tmp'
   [options|preventClickSelectsAll]='on'
+  [options|clearSearchBarOnSubmit]='on'
   [options|doubleClickSelectsAll]=''
   [options|autoSelectCopiesToClipboard]=''
   [options|autoCompleteCopiesToClipboard]=''
@@ -115,7 +116,7 @@ fix_option_default_value(){
   local -r fix_key="${1}"
   
   case "${fix_key}" in
-    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
+    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'preventClickSelectsAll' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
       echo 'on'
       ;;
     *)
@@ -186,6 +187,9 @@ FIX_OPTION_KEYs:
                                selection to clipboard when auto-completing
                                URLs; ${settings[options|autoCompleteCopiesToClipboard]:-off} by default.
   
+  clearSearchBarOnSubmit     Submitting a search from the separate search bar
+                               clears the latter's content; ${settings[options|clearSearchBarOnSubmit]:-off} by default.
+
   doubleClickSelectsAll      Double-clicking the URL bar or the search bar
                                selects the entire input field; ${settings[options|doubleClickSelectsAll]:-off} by default.
   
@@ -588,6 +592,10 @@ edit_and_lock_based_on_options(){
   if [[ "${settings[options|preventClickSelectsAll]-}" ]]; then
     edit_file 'preventClickSelectsAll' 'browser_omni' 'modules/UrlbarInput.jsm' 's/(this\._preventClickSelectsAll = )this\.focused;/\1true;/'
     edit_file 'preventClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/(this\._preventClickSelectsAll = )this\._textbox\.focused;/\1true;/'
+  fi
+
+  if [[ "${settings[options|clearSearchBarOnSubmit]-}" ]]; then
+    edit_file 'clearSearchBarOnSubmit' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' '/openTrustedLinkIn/s/$/textBox.value = "";/'
   fi
 
   if [[ "${settings[options|doubleClickSelectsAll]-}" ]]; then
