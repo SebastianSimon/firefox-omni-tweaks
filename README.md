@@ -13,13 +13,13 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 91.0a1 (2020-07-01) through 91.0a1 (2021-07-06) (64-bit)
+* Firefox Nightly 91.0a1 (2020-07-01) through 104.0a1 (2022-07-16) (64-bit)
 <!-- * Firefox ESR 78 (64-bit) (assumed to work, not actually tested yet) -->
-* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.12.14.arch1-1`)
-* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:40.2-1`)
+* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.18.11.arch1-1`)
+* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:42.3-1`)
 * Bash 4.x+
-* Info-ZIP UnZip ([`extra/unzip`][unzip] `6.0-14`)
-* Info-ZIP Zip [`extra/zip`][zip] `3.0-9`
+* Info-ZIP UnZip ([`extra/unzip`][unzip] `6.0-14` through `6.0-18`)
+* Info-ZIP Zip ([`extra/zip`][zip] `3.0-9` through `3.0-10`)
 
 _Note: the versions will only be updated for substantial changes to the script._
 
@@ -163,7 +163,7 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 | `--option autoSelectCopiesToClipboard`      |   Off   | <p>Certain actions trigger an automatic selection of text in the URL bar or the search bar which aren’t considered user-initiated and as such are not added to the selection clipboard (e.g. selected text which can be inserted with middle-click on Linux) — see <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1653191">Bugzilla Bug 1653191</a>.</p><p>This option enables clipboard selection for most cases: <kbd>Ctrl</kbd>+<kbd>L</kbd> or <kbd>F6</kbd> for URL bar selection; <kbd>Ctrl</kbd>+<kbd>K</kbd> for search bar selection; <kbd>Esc</kbd> to restore the original URL; <kbd>Tab</kbd> to focus either URL bar or search bar; or single-click or double-click selecting the entire text — if enabled.</p><p>However, additional options must be passed if selection triggered by a tab switch should also be copied (<code>tabSwitchCopiesToClipboard</code>), and if selection triggered by URL auto-complete should be copied (<code>autoCompleteCopiesToClipboard</code>).</p> |
 | `--option doubleClickSelectsAll`            |   Off   | Double-clicking the URL bar or the search bar selects the entire input field. |
 | `--option preventClickSelectsAll`           |   On    | Clicking the URL bar or the search bar no longer selects the entire input field. |
-| `--option secondsSeekedByKeyboard=`_number_ |         | Pressing <kbd>←</kbd> or <kbd>→</kbd> in the built-in video player (including Picture-in-Picture mode) seeks by _number_ seconds. Fixes [Bugzilla Bug 1668692](https://bugzilla.mozilla.org/show_bug.cgi?id=1668692) which asks for the seek interval to be changed from 15 seconds to 5 seconds. The equivalent option would be `-o secondsSeekedByKeyboard=5`. |
+| `--option secondsSeekedByKeyboard=`_number_ |         | Pressing <kbd>←</kbd> or <kbd>→</kbd> in the built-in video player (including Picture-in-Picture mode) seeks by _number_ seconds. [Bugzilla Bug 1668692](https://bugzilla.mozilla.org/show_bug.cgi?id=1668692) already changed this from 15 seconds to 5 seconds, but still didn’t offer an easily accessible option to change this duration. |
 | `--option tabSwitchCopiesToClipboard`       |   Off   | Enables copying selection in URL bar triggered by switching to a tab with a focused URL bar (with either clicking or with <kbd>Ctrl</kbd>+(<kbd>Shift</kbd>)+<kbd>Tab</kbd>, <kbd>Ctrl</kbd>+<kbd>Page Up</kbd>, <kbd>Ctrl</kbd>+<kbd>Page Down</kbd>, <kbd>Alt</kbd>+<kbd>1</kbd>..<kbd>9</kbd>, and possibly other ways). The option `tabSwitchCopiesToClipboard` requires `autoSelectCopiesToClipboard` to be set and is ignored without it. |
 
 ### Examples
