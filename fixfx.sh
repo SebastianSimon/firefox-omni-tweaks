@@ -5,8 +5,6 @@
 
 set -o 'nounset'
 
-readonly fallback_firefox_dir='/usr/lib/firefox' # Fallback path: put your Firefox install path here. The install path includes the `firefox` binary and a `browser` directory.
-
 readonly description='The FixFx script tweaks Firefox. Make sure Firefox is up-to-date and closed.'
 readonly reason_already_root='already_root'
 readonly absolute_bash_source="$(readlink --canonicalize -- "${BASH_SOURCE[0]}")"
@@ -27,7 +25,7 @@ declare -A -r formatting=(
 declare -A settings=(
   # Begin presets.
   [quiet]=''
-  [firefox_dir]=''
+  # [firefox_dirs|0]='/usr/lib/firefox'
   [backup_dir]='/tmp'
   [options|preventClickSelectsAll]='on'
   [options|clearSearchBarOnSubmit]='on'
@@ -44,7 +42,6 @@ declare -A backup_targets=(
 )
 backup_instructions=''
 valid_firefox_dirs=()
-firefox_dir=''
 is_interactive=''
 
 leave_terminal_window_open(){
@@ -230,6 +227,8 @@ Script source, full documentation, bug reports at:
 }
 
 set_options(){
+  local firefox_dirs_count='0'
+  
   while (("${#}" > 0)); do
     if combined_short_options "${1}"; then
       set -- "${1:0:2}" "$(separate_flag_option_with_hyphen "${1:0:2}")${1:2}" "${@:2}"
@@ -251,7 +250,9 @@ set_options(){
         shift
         ;;
       '-f' | '--firefox')
-        settings[firefox_dir]="${2}"
+        settings["firefox_dirs|${firefox_dirs_count}"]="${2}"
+        ((firefox_dirs_count++))
+        
         shift
         ;;
       '-o' | '--option')
@@ -277,7 +278,7 @@ set_options(){
   done
 }
 
-check_root_required(){
+check_root_required(){ # TODO firefox_dir
   declare -A checked_directories
   local package_key
   local path
@@ -357,7 +358,7 @@ initialize_backup_target(){
   echo "$(readlink --canonicalize -- "${start}${incremental_number}${end}")"
 }
 
-choose_firefox_path(){
+choose_firefox_path(){ # TODO firefox_dir
   echo 'Multiple Firefox install paths found. Type a number to choose one path:'
   set -o 'posix'
   
@@ -627,8 +628,8 @@ edit_and_lock_based_on_options(){
   fi
   
   if [[ "${settings[options|secondsSeekedByKeyboard]-}" ]]; then
-    edit_file 'secondsSeekedByKeyboard' 'omni' 'chrome/toolkit/content/global/elements/videocontrols.js' "s/(newval = oldval [+-]) 15;/\1 ${settings[options|secondsSeekedByKeyboard]-}/"
-    edit_file 'secondsSeekedByKeyboard' 'omni' 'actors/PictureInPictureChild.jsm' "s/(newval = oldval [+-]) 15;/\1 ${settings[options|secondsSeekedByKeyboard]-}/"
+    edit_file 'secondsSeekedByKeyboard' 'omni' 'chrome/toolkit/content/global/elements/videocontrols.js' "s/(newval = oldval [+-]) [0-9]+;/\1 ${settings[options|secondsSeekedByKeyboard]-}/"
+    edit_file 'secondsSeekedByKeyboard' 'omni' 'actors/PictureInPictureChild.jsm' "s/(newval = oldval [+-]) [0-9]+;/\1 ${settings[options|secondsSeekedByKeyboard]-}/"
   fi
 }
 
