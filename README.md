@@ -1,6 +1,7 @@
 # Firefox `omni.ja` tweaks
 
 A script that directly edits the internal Firefox files stored in the `omni.ja` and `browser/omni.ja` archives to customize the behavior of Firefox such as disabling `clickSelectsAll`, copying automatic URL bar selection to clipboard, etc.
+This also applies to Firefox ESR.
 
 ## Where does this script work?
 
@@ -13,9 +14,9 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 91.0a1 (2020-07-01) through 104.0a1 (2022-07-16) (64-bit)
+* Firefox Nightly 91.0a1 (2020-07-01) through 105.0a1 (2022-07-27) (64-bit)
 <!-- * Firefox ESR 78 (64-bit) (assumed to work, not actually tested yet) -->
-* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.18.11.arch1-1`)
+* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.18.14.arch1-1`)
 * Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:42.3-1`)
 * Bash 4.x+
 * Info-ZIP UnZip ([`extra/unzip`][unzip] `6.0-14` through `6.0-18`)
@@ -25,10 +26,10 @@ _Note: the versions will only be updated for substantial changes to the script._
 
 ## How to run the script?
 
-The script applies changes to a specific Firefox install path; it needs to be executed after each update of that Firefox install path.
+The script applies changes to a set of Firefox install paths; it needs to be executed after an update of the Firefox install paths.
 It should not be executed a second time before another Firefox update.
 
-The script automatically modifies the `omni.ja` file and the `browser/omni.ja` file, and clears the browser’s startup cache and creates a `.purgecaches` file, in order to assure that the changes are properly applied when starting Firefox.
+The script automatically modifies the `omni.ja` files and the `browser/omni.ja` files, and clears the browsers’ startup caches and creates `.purgecaches` files, in order to assure that the changes are properly applied when starting Firefox.
 
 This step-by-step guide describes default script execution, i.e. without any options passed; you can pass [options](#options-in-detail) listed below.
 
@@ -41,8 +42,8 @@ Also see [my Super User answer][super-user] for detailed steps.
 
 ### Before running the script
 
-3. Update Firefox and start Firefox so it installs all the updates properly.
-4. Close Firefox.
+3. Update all Firefox browsers you want to fix and start each Firefox browser so they install all the updates properly.
+4. Close all Firefox browsers you want to fix.
 
 ### Running the script
 
@@ -52,24 +53,26 @@ Also see [my Super User answer][super-user] for detailed steps.
    * Non-interactively: Click it in your file manager, then click the “Run” button.
    
    Interactive execution is recommended.
-6. The script should find your Firefox (and Firefox ESR) install path(s) automatically.
-   If multiple viable paths are found, you can select the one you want to fix.
+6. The script should find your Firefox install path(s) automatically.
+   If multiple viable paths are found, you can select the ones you want to fix.
    If no paths are found, you can either
    
-   * call the script with the [`--firefox` option](#options-in-detail), specifying the Firefox install path, or
-   * edit the script and put the correct path where it says `Fallback path` (near the top of the script).
+   * call the script with the [`--firefox` option](#options-in-detail), specifying the Firefox install paths, or
+   * use the Web interface (WIP) to download a version of the script with the paths specified in the presets.
    
-   The correct path contains a `browser` directory with an `omni.ja` in it.
-7. The script checks if you have write access to all relevant directories: the Firefox install path, the backup path, and `/tmp`, where the unzipping happens.
+   The correct paths contain an `omni.ja` file, as well as a `browser` directory with another `omni.ja` file in it.
+7. The script checks if you have write access to all relevant directories: the Firefox install paths, the backup path, and `/tmp`, where the unzipping happens.
    If not, you’ll be asked to enter your root password.
    You can also run the script with `sudo` instead.
-8. A backup of the internal application resources (`omni.ja` and `browser/omni.ja`) of your Firefox installation is created (in `/tmp`, by default).
-9. After a few moments, you should be able to launch Firefox normally.
-   If everything went well, you should now be able to launch a Firefox with an improved user experience!
-   Press <kbd>Enter</kbd> to exit.
-10. However, if Firefox won’t run properly, close Firefox, and restore the backup by typing <kbd>r</kbd> and <kbd>Enter</kbd>.
-    The backup will be restored and the script will exit.
-    Start Firefox again to go back to normal.
+8. All specified Firefox paths are processed:
+   1. A backup of the internal application resources (`omni.ja` and `browser/omni.ja`) of your Firefox installation is created (in `/tmp`, by default).
+   2. After a few moments, you should be able to launch the processed Firefox browser normally.
+      If everything went well, you can now test your browser with an improved user experience!
+      Press <kbd>Enter</kbd> to exit.
+   3. However, if the Firefox browser won’t run properly, close Firefox, and restore the backup by typing <kbd>r</kbd> and <kbd>Enter</kbd>.
+      The backup will be restored.
+      Start Firefox again to go back to normal.
+   4. Repeat for the next Firefox path; at the end, the script will exit.
 
 Let me know if something went wrong by creating a new issue.
 Provide details about terminal output, your system setup, and your software versions.
@@ -89,8 +92,8 @@ If you need to restore the backup later on, you can type commands into the termi
 Check if you need to run this as root, and _double-check_ the file paths.
 
 ```sh
-firefox_dir=$(whereis -b firefox | cut -d ' ' -f 2)          # Or put the correct path here, like the `Fallback path` line in the script.
-                                                             # `cut -d ' ' -f 2` just takes the first path found, which may not be the right one.
+firefox_dir=$(whereis -b firefox | cut -d ' ' -f 2)          # Or put the correct path here, like `firefox_dir=/usr/lib/firefox`.
+                                                             # `cut -d ' ' -f 2` just takes the first path found, which might not be the right one.
 cp -p /tmp/omni-n.ja~ "$firefox_dir/omni.ja"                 # Replace `n` by the incremental number of the backup file name.
 cp -p /tmp/browser_omni-n.ja~ "$firefox_dir/browser/omni.ja" # Replace `n` by the incremental number of the backup file name.
 touch "$firefox_dir/browser/.purgecaches"                    # This is necessary only here. A "$firefox_dir/.purgecaches" is ignored.
@@ -104,26 +107,43 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 
 * `-f DIR`, `--firefox DIR`
 
-  Picks `DIR` as the Firefox install path that is to be fixed.
+  Adds `DIR` to the collection of Firefox install paths that are to be fixed.
+  Can be used multiple times: `-f DIR1 -f DIR2`, etc.
   
-  Note that `DIR` must include a `browser/omni.ja` file. <!-- The script currently really only checks for `browser/omni.ja`, but not `omni.ja`. I could change this, but it’s not strictly necessary. -->
-  If this validation fails, the script terminates.
+  Note that `DIR` must include an `omni.ja` file and a `browser/omni.ja` file.
+  If it doesn’t the path is ignored.
   
-  Omit this option to let the script find all `firefox` or `firefox-esr` paths on your system, validate them, and pick the one directory that is found.
-  If more than one viable directory is found, the script will ask for selection of a specific directory (unless `-q` or `--quiet` is passed).
+  You can use this together with `-a` to add all automatically found paths to the collection.
+
+* `-a`, `--add-all-found`
+
+  Automatically find all Firefox install paths and add them to the collection of Firefox install paths that are to be fixed.
+  
+  If `-f` or `-y` are not passed, the script acts as if the option is enabled by default, with one exception:
+  the script will interactively prompt for a choice of Firefox paths if and only if
+  * more than one path is found, and
+  * an interactive prompt hasn’t already occured, and
+  * the script is executed interactively, and
+  * `-q` is not passed, and
+  * `-a` is not passed, and
+  * `-y` is not passed, and
+  * `-f` is not passed.
+  In other words, the script attempts to fix all Firefox paths by default, but since this isn’t requested explicitly, the script will ask, if possible.
+  
+* `-y`, `--fix-only-youngest`
+
+  Pick only the Firefox install path from the collection with the latest modification / install date, to be fixed.
 
 * `-o FIX_OPTION`, `--option FIX_OPTION`
 
   Choose which functionality you want to change in the internal files.
-  This flag can be used multiple times.
+  Can be used multiple times: `-o FIX_OPTION1 -o FIX_OPTION2`, etc.
   
   `FIX_OPTION` can have a few different forms:
   * To turn the option `yourOptionHere` _off_, use `yourOptionHere=` (e.g. `--option preventClickSelectsAll=` or `-o preventClickSelectsAll=`).
-  This sets the option entry’s value to an empty string, which acts as a false value in Bash.
+    This sets the option entry’s value to an empty string, which acts as a false value in Bash.
   * To turn the option `yourOptionHere` _on_, just type `yourOptionHere` by itself, or with any other substring after `=` (e.g. `-o preventClickSelectsAll` or `-o preventClickSelectsAll=true`).
   * To supply a custom value, use `yourOptionHere=yourValueHere`.
-  
-  To supply multiple option settings, use the flag multiple times (e.g. `-o optionA= -o optionB`).
   
   See the [available options](#available-options) below.
   Unrecognized options are ignored.
@@ -147,13 +167,27 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
   This will also suppress asking for confirmation.
   
   By default, output will be emitted, but if the script was not executed in an interactive terminal, all interactive selections or confirmation questions are suppressed, regardless of whether the `--quiet` option was passed or not.
-  If confirmation questions are suppressed and the script finds more than one viable Firefox install path, it will automatically pick the most recently updated one.
   Note that these tests aren’t perfect and that they can break using some file descriptor redirection, but it should cover most basic cases of executing this script.
 
 * `-h`, `-?`, `--help`, `--?`
 
   If this option is present, the help information is printed, and the script exits.
   The help text contains contextual information such as the path name of the script source, the default options, etc.
+
+### Interaction between `-a`, `-f`, `-q`, and `-y`
+
+Based on the options passed to the script, the script will first collect certain Firefox paths, then filter them.
+The script will only process the filtered set of Firefox paths.
+
+| `-y` passed | `-a` passed | `-f` passed | Collection | Filter (resulting set) |
+|:-----------:|:-----------:|:-----------:|:----------:|:----------------------:|
+| ❌ | ❌ | ❌ | ➕ Automatically found | If interactively executed _and_ `-q` not passed _and_ more than one path found, prompt user to choose which paths to process. Otherwise, process all. |
+| ❌ | ❌ | ✔️ | ➕ Specified | All |
+| ❌ | ✔️ | ❌ | ➕ Automatically found | All |
+| ❌ | ✔️ | ✔️ | ➕ Automatically found<br/>➕ Specified | All |
+| ✔️ | ❌ | ✔️ | ➕ Specified | Only youngest |
+| ✔️ | ❌ or ✔️ | ❌ | ➕ Automatically found | Only youngest |
+| ✔️ | ✔️ | ✔️ | ➕ Automatically found<br/>➕ Specified | Only youngest |
 
 ### Available options
 
@@ -204,7 +238,7 @@ Error codes (i.e. status codes greater than 0) are usually accompanied by an err
 
 * `0` for success: everything went as expected, the script terminated successfully.
 * `1` for general failure due to utilities used in the script: e.g. some file was not found, some directory could not be created, directory navigation failed, unzipping or zipping the `omni.ja` failed, read or write permissions could not be granted, etc.
-* `2` for incorrect script usage: e.g. `--backup`, `--firefox`, or `--option` used without values, the specified Backup directory isn’t an existing directory, the specified Firefox path is not a valid Firefox path, etc.
+* `2` for incorrect script usage: e.g. `--backup`, `--firefox`, or `--option` used without values, the specified Backup directory isn’t an existing directory, no valid Firefox path found, etc.
 * `130` if the script process was terminated (e.g. via <kbd>Ctrl</kbd>+<kbd>C</kbd>) or killed.
 
 ---
