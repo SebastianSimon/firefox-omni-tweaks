@@ -164,13 +164,15 @@ recently modified path.
 
 OPTIONs:
   -f DIR, --firefox DIR      Add DIR as a Firefox (ESR) install path to the
-                               selection that needs fixing.
+                               collection that needs fixing. Can be used
+                               multiple times.
   
   -a, --add-all-found        Automatically find all Firefox (ESR) install paths
-                               and add them to the selection that needs fixing.
+                               and add them to the collection that needs
+                               fixing.
   
   -y, --fix-only-youngest    Pick only the youngest Firefox (ESR) install path
-                               from the selection, i.e. latest modification /
+                               from the collection, i.e. latest modification /
                                install date, to be fixed.
   
   -o FIX_OPTION,             Choose which tweak to apply to omni.ja. FIX_OPTION
@@ -178,6 +180,7 @@ OPTIONs:
                                turn a tweak on or off, respectively;
                                FIX_OPTION can also be 'FIX_OPTION_KEY=VALUE',
                                if a FIX_OPTION_KEY requires a specific VALUE.
+                               Can be used multiple times.
   
   -b DIR, --backup DIR       Store backup of internal Firefox files 'omni.ja'
                                and 'browser/omni.ja' in DIR; directory is
@@ -742,7 +745,7 @@ process_firefox_dirs(){
   
   if (("${#filtered_firefox_dirs[@]}" == 0)); then
     echo "${formatting[red]}Error: No valid Firefox paths found.${formatting[reset]}" >&2
-    terminate '1'
+    terminate '2'
   fi
   
   for firefox_dir in "${filtered_firefox_dirs[@]}"; do
