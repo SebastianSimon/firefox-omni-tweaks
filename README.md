@@ -14,8 +14,8 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 91.0a1 (2020-07-01) through 105.0a1 (2022-07-27) (64-bit)
-<!-- * Firefox ESR 78 (64-bit) (assumed to work, not actually tested yet) -->
+* Firefox Nightly 91.0a1 (2020-07-01) through 105.0a1 (2022-07-29) (64-bit)
+* Firefox ESR 78 through 102 (64-bit)
 * Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.18.14.arch1-1`)
 * Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:42.3-1`)
 * Bash 4.x+
@@ -55,11 +55,8 @@ Also see [my Super User answer][super-user] for detailed steps.
    Interactive execution is recommended.
 6. The script should find your Firefox install path(s) automatically.
    If multiple viable paths are found, you can select the ones you want to fix.
-   If no paths are found, you can either
-   
-   * call the script with the [`--firefox` option](#options-in-detail), specifying the Firefox install paths, or
-   * use the Web interface (WIP) to download a version of the script with the paths specified in the presets.
-   
+   If no paths are found, you can <!-- either --> call the script with the [`--firefox` option](#options-in-detail), specifying the Firefox install paths.
+   <!--, or * use the Web interface (WIP) to download a version of the script with the paths specified in the presets -->
    The correct paths contain an `omni.ja` file, as well as a `browser` directory with another `omni.ja` file in it.
 7. The script checks if you have write access to all relevant directories: the Firefox install paths, the backup path, and `/tmp`, where the unzipping happens.
    If not, you’ll be asked to enter your root password.
@@ -111,7 +108,7 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
   Can be used multiple times: `-f DIR1 -f DIR2`, etc.
   
   Note that `DIR` must include an `omni.ja` file and a `browser/omni.ja` file.
-  If it doesn’t the path is ignored.
+  If it doesn’t, the path is ignored.
   
   You can use this together with `-a` to add all automatically found paths to the collection.
 
@@ -119,7 +116,7 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 
   Automatically find all Firefox install paths and add them to the collection of Firefox install paths that are to be fixed.
   
-  If `-f` or `-y` are not passed, the script acts as if the option is enabled by default, with one exception:
+  If neither `-f` nor `-y` are passed, the script acts as if the option is enabled by default, with one exception:
   the script will interactively prompt for a choice of Firefox paths if and only if
   * more than one path is found, and
   * an interactive prompt hasn’t already occured, and
@@ -128,6 +125,7 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
   * `-a` is not passed, and
   * `-y` is not passed, and
   * `-f` is not passed.
+  
   In other words, the script attempts to fix all Firefox paths by default, but since this isn’t requested explicitly, the script will ask, if possible.
   
 * `-y`, `--fix-only-youngest`
@@ -176,7 +174,7 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 
 ### Interaction between `-a`, `-f`, `-q`, and `-y`
 
-Based on the options passed to the script, the script will first collect certain Firefox paths, then filter them.
+Based on the options passed to the script, the script will first collect certain Firefox paths (e.g. the specified ones from `-f`, or the automatically found ones), then filter them (e.g. the youngest modification date using `-y`, or all of them).
 The script will only process the filtered set of Firefox paths.
 
 | `-y` passed | `-a` passed | `-f` passed | Collection | Filter (resulting set) |
@@ -206,14 +204,14 @@ The script will only process the filtered set of Firefox paths.
 We’ll assume that the script is callable via `./fixfx.sh`.
 The exact path and file name depends on where you placed the file.
 
-* The following command fixes a specific Firefox installation located under `/usr/lib/firefox-de_DE` and creates an incremental backup of the original `omni.ja` in `/tmp`.
-  The specified directory must contain a `browser/omni.ja`.
+* The following command fixes a specific Firefox installation located under `/usr/lib/firefox-de_DE` and creates an incremental backup of the original `omni.ja` files in `/tmp`.
+  The specified directory must contain an `omni.ja` and a `browser/omni.ja`.
 
   ```sh
   ./fixfx.sh --firefox /usr/lib/firefox-de_DE
   ```
 
-* This command fixes an automatically determined Firefox installation, while creating a backup of `omni.ja` and `browser/omni.ja` in the specified directory.
+* This command fixes a set of automatically determined Firefox installations, while creating a backup of `omni.ja` and `browser/omni.ja` in the specified directory.
   The file names are incremental, e.g. `omni-0.ja~`, `omni-1.ja~`, etc.
 
   ```sh

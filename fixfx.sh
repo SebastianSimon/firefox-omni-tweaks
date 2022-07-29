@@ -8,7 +8,7 @@ set -o 'nounset'
 readonly description='The FixFx script tweaks Firefox. Make sure Firefox is up-to-date and closed.'
 readonly reason_already_root='already_root'
 readonly absolute_bash_source="$(readlink --canonicalize -- "${BASH_SOURCE[0]}")"
-readonly is_interactive="$([[ -t 1 ]] && echo 'true')"
+is_interactive=''
 declare -A -r unpack_dirs=(
   [omni]="/tmp/fixfx-omni"
   [browser_omni]="/tmp/fixfx-browser_omni"
@@ -27,7 +27,6 @@ declare -A settings=(
   # Begin presets.
   [addAllFound]=''
   [backup_dir]='/tmp'
-  # Entries like [firefox_dirs|0]='/usr/lib/firefox' get added here dynamically or via Web interface.
   [fixOnlyYoungest]=''
   [options|preventClickSelectsAll]='on'
   [options|clearSearchBarOnSubmit]='on'
@@ -43,11 +42,25 @@ declare -A backup_targets=(
   [omni]=''
   [browser_omni]=''
 )
-needs_confirm_description_read="$([[ "${is_interactive}" ]] || echo 'true')"
+needs_confirm_description_read='true'
 backup_instructions=''
-declare -A collected_firefox_dirs
+declare -A collected_firefox_dirs=()
 filtered_firefox_dirs=()
 explicit_script_params=()
+
+cleanup(){
+  local unpack_dir
+  
+  for unpack_dir in "${unpack_dirs[@]}"; do
+    if [[ -d "${unpack_dir}" ]]; then
+      rm --force --recursive -- "${unpack_dir}"
+    fi
+  done
+  
+  if [[ "${backup_instructions}" ]]; then
+    echo "${backup_instructions}"
+  fi
+}
 
 leave_terminal_window_open(){
   local executed_via_file_dialog=''
@@ -63,20 +76,6 @@ leave_terminal_window_open(){
   
   if [[ ! "${executed_via_file_dialog}" || ! "${executed_in_terminal_window}" ]] || [ "$(id --user)" -eq '0' ]; then
     return '1'
-  fi
-}
-
-cleanup(){
-  local unpack_dir
-  
-  for unpack_dir in "${unpack_dirs[@]}"; do
-    if [[ -d "${unpack_dir}" ]]; then
-      rm --force --recursive -- "${unpack_dir}"
-    fi
-  done
-  
-  if [[ "${backup_instructions}" ]]; then
-    echo "${backup_instructions}"
   fi
 }
 
@@ -118,7 +117,7 @@ fix_option_default_value(){
   local -r fix_key="${1}"
   
   case "${fix_key}" in
-    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'preventClickSelectsAll' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
+    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'clearSearchBarOnSubmit' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
       echo 'on'
       ;;
     *)
@@ -149,6 +148,18 @@ show_usage(){
 OPTIONs '-f', '--firefox', '-b', and '--backup' need a DIR value.
 OPTIONs '-o' and '--option' need a FIX_OPTION value.
 Type '${BASH_SOURCE[0]} --help' for more information."
+}
+
+fix_option_default_value(){
+  local -r fix_key="${1}"
+  
+  case "${fix_key}" in
+    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
+      echo 'on'
+      ;;
+    *)
+      echo ''
+  esac
 }
 
 show_help(){
@@ -322,31 +333,169 @@ set_options(){
   done
 }
 
-get_options(){ # TODO Repetitive code.
-  local filtered_firefox_dir
-  
-  explicit_script_params+=('-b' "${settings[backup_dir]}")
-  
-  for filtered_firefox_dir in "${filtered_firefox_dirs[@]}"; do
-    explicit_script_params+=('-f' "${filtered_firefox_dir}")
-  done
-  
-  explicit_script_params+=(
-    '-o' "preventClickSelectsAll=${settings[options|preventClickSelectsAll]}"
-    '-o' "doubleClickSelectsAll=${settings[options|doubleClickSelectsAll]}"
-    '-o' "autoSelectCopiesToClipboard=${settings[options|autoSelectCopiesToClipboard]}"
-    '-o' "autoCompleteCopiesToClipboard=${settings[options|autoCompleteCopiesToClipboard]}"
-    '-o' "tabSwitchCopiesToClipboard=${settings[options|tabSwitchCopiesToClipboard]}"
-    '-o' "secondsSeekedByKeyboard=${settings[options|secondsSeekedByKeyboard]}"
-  )
-  
-  if [[ "${settings[quiet]}" ]];
-    explicit_script_params+=('-q')
+check_interactive(){
+  if [[ -t 1 ]]; then
+    is_interactive='true'
+  fi
+
+  readonly is_interactive
+
+  if [[ ! "${is_interactive}" ]]; then
+    needs_confirm_description_read=''
   fi
 }
 
-check_root_required(){ # TODO Repetitive code.
-  declare -A checked_directories
+apply_quiet(){
+  if [[ "${settings[quiet]}" ]]; then
+    needs_confirm_description_read=''
+    exec 1>'/dev/null'
+  fi
+}
+
+show_tweaks(){
+  local enabled_fix_options=()
+  local fix_option
+
+  for fix_option in "${!settings[@]}"; do
+    if [[ "${fix_option}" =~ ^options\| && "${settings[${fix_option}]}" ]]; then
+      enabled_fix_options+=("${fix_option#options|}$([[ "${settings[${fix_option}]}" != 'on' ]] && echo "=${settings[${fix_option}]}")")
+    fi
+  done
+  
+  if [[ ! "${FIXFX_SWITCHED_TO_ROOT-}" ]]; then
+    echo "${description}"
+    
+    if (("${#enabled_fix_options[@]}" == 0)); then
+      echo "No tweaks enabled; repack omni.ja and browser/omni.ja without edits."
+    else
+      echo "Enabled tweak$( (("${#enabled_fix_options[@]}" > 1)) && echo 's'): ${enabled_fix_options[*]@Q}."
+    fi
+  fi
+}
+
+apply_options(){
+  check_interactive
+  apply_quiet
+  show_tweaks
+}
+
+collect_specified(){
+  local firefox_dirs_count='0'
+  
+  while [[ -v settings["firefox_dirs|${firefox_dirs_count}"] ]]; do
+    if [[ -f "${settings["firefox_dirs|${firefox_dirs_count}"]}/omni.ja" && -f "${settings["firefox_dirs|${firefox_dirs_count}"]}/browser/omni.ja" ]]; then
+      collected_firefox_dirs["${settings["firefox_dirs|${firefox_dirs_count}"]}"]='1'
+    else
+      echo "${formatting[yellow]}Warning: ${settings["firefox_dirs|${firefox_dirs_count}"]@Q} is not a Firefox installation path.${formatting[reset]}" >&2
+    fi
+    
+    ((firefox_dirs_count++))
+  done
+}
+
+collect_all(){
+  local found_firefox_dir
+  local found_firefox_dirs
+
+  if [[ ! "${is_interactive}" || "${settings[addAllFound]}" || ! -v settings['firefox_dirs|0'] ]]; then
+    mapfile -t found_firefox_dirs < <(printf "%s" "$(whereis -b 'firefox' 'firefox-esr' | sed --regexp-extended --expression='s/^.*?:\s*//g' | xargs | tr ' ' '\n')")
+    
+    for found_firefox_dir in "${found_firefox_dirs[@]}"; do
+      if [[ -f "${found_firefox_dir}/omni.ja" && -f "${found_firefox_dir}/browser/omni.ja" ]]; then
+        collected_firefox_dirs["${found_firefox_dir}"]='1'
+      fi
+    done
+  fi
+}
+
+collect_firefox_dirs(){
+  collect_specified
+  collect_all
+}
+
+filter_only_youngest(){
+  local most_recently_updated
+  local current_firefox_dir=''
+  
+  for most_recently_updated in "${!collected_firefox_dirs[@]}"; do
+    if [[ "${most_recently_updated}/browser/omni.ja" -nt "${current_firefox_dir}/browser/omni.ja" ]]; then
+      current_firefox_dir="${most_recently_updated}"
+    fi
+  done
+  
+  if (("${#collected_firefox_dirs[@]}" > 0)); then
+    filtered_firefox_dirs+=("${current_firefox_dir}")
+  fi
+}
+
+filter_include_all(){
+  local collected_firefox_dir
+  
+  for collected_firefox_dir in "${!collected_firefox_dirs[@]}"; do
+    filtered_firefox_dirs+=("${collected_firefox_dir}")
+  done
+}
+
+filter_multiple_choice(){
+  local collected_firefox_dir
+  local firefox_choices
+  local firefox_reply
+  local chosen_firefox_indexes
+  local chosen_firefox_index
+  
+  while (("${#filtered_firefox_dirs[@]}" == 0)); do
+    echo 'Multiple Firefox install paths found. Type numbers to choose paths; leave empty to choose all. Non-numbers are ignored.'
+    firefox_choices=()
+    
+    for collected_firefox_dir in "${!collected_firefox_dirs[@]}"; do
+      firefox_choices+=("${collected_firefox_dir}")
+      echo "$(printf %2s "${#firefox_choices[@]}"): ${collected_firefox_dir}"
+    done
+    
+    read -p 'Choose: ' -r firefox_reply
+    mapfile -t chosen_firefox_indexes < <(grep --extended-regexp '[0-9]+' --only-matching <<< "${firefox_reply}")
+    
+    if (("${#chosen_firefox_indexes[@]}" == 0)); then
+      filter_include_all
+    else
+      for chosen_firefox_index in "${chosen_firefox_indexes[@]}"; do
+        if (("${chosen_firefox_index}" < 1 || "${chosen_firefox_index}" > "${#collected_firefox_dirs[@]}")); then
+          echo "${formatting[yellow]}Warning: ${chosen_firefox_index@Q} is not a valid choice.${formatting[reset]}" >&2
+        else
+          filtered_firefox_dirs+=("${firefox_choices["$(("${chosen_firefox_index}" - 1))"]}")
+        fi
+      done
+      
+      if (("${#filtered_firefox_dirs[@]}" == 0)); then
+        echo "${formatting[yellow]}Warning: Could not receive a valid choice. Try again or press [Ctrl] + [C] to cancel.${formatting[reset]}" >&2
+      fi
+    fi
+  done
+}
+
+filter_firefox_dirs(){
+  if [[ "${settings[fixOnlyYoungest]}" ]]; then
+    filter_only_youngest
+  elif [[ "${is_interactive}" && ! "${settings[addAllFound]}" && ! -v settings['firefox_dirs|0'] && ! "${settings[quiet]}" ]] && (("${#collected_firefox_dirs[@]}" > 1)); then
+    needs_confirm_description_read=''
+    filter_multiple_choice
+  else
+    filter_include_all
+  fi
+}
+
+find_backup_dir(){
+  if [[ ! -e "${settings[backup_dir]}" && -d "$(dirname -- "${settings[backup_dir]}")" || -d "${settings[backup_dir]}" ]]; then
+    readlink --canonicalize -- "${settings[backup_dir]}"
+  else
+    echo "${formatting[red]}Error: ${settings[backup_dir]@Q} has no parent directory or is not a directory itself.${formatting[reset]}" >&2
+    
+    return '2'
+  fi
+}
+
+check_write_privileges(){
+  declare -A checked_directories=()
   local firefox_dir
   local package_key
   local path
@@ -358,50 +507,46 @@ check_root_required(){ # TODO Repetitive code.
   fi
   
   for package_key in 'omni' 'browser_omni'; do
-    for path in "$(dirname -- unpack_dirs[${package_key}])"; do # TODO: readlink --canonicalize?
-      if [[ "${checked_directories[${path}]-}" ]]; then
-        continue
-      fi
-      
-      checked_directories["${path}"]='checked'
-      
-      if [[ ! -w "${path}" ]]; then
-        echo "${path}"
-        
-        return
-      fi
-    done
+    path="$(dirname -- "${unpack_dirs[${package_key}]}")"
+    checked_directories["$(readlink --canonicalize -- "${path}")"]='checked'
   
     for firefox_dir in "${filtered_firefox_dirs[@]}"; do
-      for path in "$(dirname -- "${firefox_dir}/${unpack_targets[${package_key}]}")" "${firefox_dir}/${unpack_targets[${package_key}]}"; do # TODO: readlink --canonicalize?
-        if [[ "${checked_directories[${path}]-}" ]]; then
-          continue
-        fi
-        
-        checked_directories["${path}"]='checked'
-        
-        if [[ ! -w "${path}" ]]; then
-          echo "${path}"
-          
-          return
-        fi
+      for path in "$(dirname -- "${firefox_dir}/${unpack_targets[${package_key}]}")" "${firefox_dir}/${unpack_targets[${package_key}]}"; do
+        checked_directories["$(readlink --canonicalize -- "${path}")"]='checked'
       done
     done
   done
   
   for path in "${@}"; do
-    if [[ "${checked_directories[${path}]-}" ]]; then
-      continue
-    fi
-    
-    checked_directories["${path}"]='checked'
-    
+    checked_directories["$(readlink --canonicalize -- "${path}")"]='checked'
+  done
+  
+  for path in "${!checked_directories[@]}"; do
     if [[ ! -w "${path}" ]]; then
       echo "${path}"
       
       return
     fi
   done
+}
+
+get_options(){
+  local filtered_firefox_dir
+  local fix_option
+  
+  explicit_script_params+=('-b' "${settings[backup_dir]}")
+  
+  for filtered_firefox_dir in "${filtered_firefox_dirs[@]}"; do
+    explicit_script_params+=('-f' "${filtered_firefox_dir}")
+  done
+  
+  for fix_option in 'preventClickSelectsAll' 'doubleClickSelectsAll' 'autoSelectCopiesToClipboard' 'autoCompleteCopiesToClipboard' 'tabSwitchCopiesToClipboard' 'secondsSeekedByKeyboard'; do
+    explicit_script_params+=('-o' "${fix_option}=${settings[options|${fix_option}]}")
+  done
+  
+  if [[ "${settings[quiet]}" ]]; then
+    explicit_script_params+=('-q')
+  fi
 }
 
 require_root(){
@@ -411,13 +556,37 @@ require_root(){
   fi
 }
 
-find_backup_dir(){
-  if [[ ! -e "${settings[backup_dir]}" && -d "$(dirname -- "${settings[backup_dir]}")" || -d "${settings[backup_dir]}" ]]; then
-    echo "$(readlink --canonicalize -- "${settings[backup_dir]}")"
+prepare_processing(){
+  local backup_dir=''
+  
+  if (("${#filtered_firefox_dirs[@]}" == 0)); then
+    echo "${formatting[red]}Error: No valid Firefox paths found.${formatting[reset]}" >&2
+    terminate '2'
+  fi
+  
+  if [[ "${FIXFX_SWITCHED_TO_ROOT-}" ]]; then
+    needs_confirm_description_read=''
   else
-    echo "${formatting[red]}Error: ${settings[backup_dir]@Q} has no parent directory or is not a directory itself.${formatting[reset]}" >&2
-    
-    return '2'
+    echo "Firefox location$( (("${#filtered_firefox_dirs[@]}" > 1)) && echo 's'): ${filtered_firefox_dirs[*]@Q}."
+  fi
+  
+  backup_dir="$(find_backup_dir)" || terminate "${?}"
+  
+  if [[ ! -e "${backup_dir}" ]]; then
+    backup_dir="$(dirname -- "${backup_dir}")"
+  fi
+  
+  readonly backup_dir
+  root_required_reason="$(check_write_privileges "${backup_dir}")"
+  
+  if [[ "${root_required_reason}" && "${root_required_reason}" != "${reason_already_root}" ]]; then
+    echo "Continue as root: write access to ${root_required_reason@Q} is required."
+    require_root || terminate "${?}"
+    terminate '0'
+  fi
+  
+  if [[ "${needs_confirm_description_read}" ]]; then
+    read -p "Press [Enter] to continue. " -r
   fi
 }
 
@@ -440,86 +609,13 @@ initialize_backup_target(){
     ((incremental_number++))
   done
   
-  echo "$(readlink --canonicalize -- "${start}${incremental_number}${end}")"
+  readlink --canonicalize -- "${start}${incremental_number}${end}"
 }
 
-collect_firefox_dirs(){
-  local firefox_dirs_count='0'
-  local found_firefox_dir
-  local found_firefox_dirs
-  
-  while [[ -v settings["firefox_dirs|${firefox_dirs_count}"] ]]; do
-    if [[ -f "${settings["firefox_dirs|${firefox_dirs_count}"]}/omni.ja" && -f "${settings["firefox_dirs|${firefox_dirs_count}"]}/browser/omni.ja" ]];
-      collected_firefox_dirs["${settings["firefox_dirs|${firefox_dirs_count}"]}"]='1'
-    else
-      echo "${formatting[yellow]}Warning: ${settings["firefox_dirs|${firefox_dirs_count}"]@Q} is not a Firefox installation path.${formatting[reset]}" >&2
-    fi
-    
-    ((firefox_dirs_count++))
+assign_backup_target(){
+  for package_key in "${!backup_targets[@]}"; do
+    backup_targets["${package_key}"]="$(initialize_backup_target "${package_key}")" || terminate "${?}"
   done
-
-  if [[ ! "${is_interactive}" || "${settings[addAllFound]}" || ! -v settings['firefox_dirs|0'] ]]; then
-    mapfile -t found_firefox_dirs < <(printf "%s" "$(whereis -b 'firefox' 'firefox-esr' | sed --regexp-extended --expression='s/^.*?:\s*//g' | xargs | tr ' ' '\n')")
-    
-    for found_firefox_dir in "${found_firefox_dirs[@]}"; do
-      if [[ -f "${found_firefox_dir}/omni.ja" && -f "${found_firefox_dir}/browser/omni.ja" ]];
-        collected_firefox_dirs["${found_firefox_dir}"]='1'
-      fi
-    done
-  fi
-}
-
-filter_include_all(){
-  local collected_firefox_dir
-  
-  for collected_firefox_dir in "${!collected_firefox_dirs[@]}"; do
-    filtered_firefox_dirs+=("${collected_firefox_dir}")
-  done
-}
-
-filter_firefox_dirs(){
-  local collected_firefox_dir
-  local most_recently_updated
-  local firefox_reply
-  local current_firefox_dir=''
-  local chosen_firefox_index
-  local firefox_choices=()
-  
-  if [[ "${settings[fixOnlyYoungest]}" ]]; then
-    for most_recently_updated in "${!collected_firefox_dirs[@]}"; do
-      if [[ "${most_recently_updated}/browser/omni.ja" -nt "${current_firefox_dir}/browser/omni.ja" ]]; then
-        current_firefox_dir="${most_recently_updated}"
-      fi
-    done
-    
-  
-    if (("${#collected_firefox_dirs[@]}" > 0)); then
-      filtered_firefox_dirs+=("${current_firefox_dir}")
-    fi
-  elif [[ "${is_interactive}" && ! "${settings[addAllFound]}" && ! -v settings['firefox_dirs|0'] && ! "${settings[quiet]}" ]] && (("${#collected_firefox_dirs[@]}" > 1)); then
-    echo 'Multiple Firefox install paths found. Type numbers to choose paths; leave empty to choose all. Non-numbers are ignored.'
-    
-    # Multiple choice.
-    for collected_firefox_dir in "${!collected_firefox_dirs[@]}"; do
-      firefox_choices+=("${collected_firefox_dir}")
-      echo "$(printf %2s "${#firefox_choices}"): ${collected_firefox_dir}"
-    done
-    
-    needs_confirm_description_read=''
-    read -p 'Choose: ' -r firefox_reply
-    mapfile -t chosen_firefox_indexes < <(grep -E '[0-9]+' -o <<< "${firefox_reply}")
-    
-    if (("${#chosen_firefox_dirs[@]}" == 0)); then
-      filter_include_all
-    elif
-      for chosen_firefox_index in "${chosen_firefox_indexes[@]}"; do
-        ((chosen_firefox_index--))
-        filtered_firefox_dirs+=("${firefox_choices["${chosen_firefox_index}"]}")
-      done
-    fi
-  else
-    filter_include_all
-  fi
 }
 
 unzip_without_expected_errors(){
@@ -541,9 +637,9 @@ unzip_without_expected_errors(){
   fi
   
   if [[ "${unzip_errors}" ]] && ! xargs <<< "${unzip_errors}" | grep --extended-regexp --quiet -- "${expected_errors}"; then
-    echo
-    echo "${formatting[yellow]}Warning: unexpected warning(s) or error(s) in unzip:"
-    echo "${unzip_errors}${formatting[reset]}"
+    echo 
+    echo "${formatting[yellow]}Warning: unexpected warning(s) or error(s) in unzip:" >&2
+    echo "${unzip_errors}${formatting[reset]}" >&2
     echo
   fi
 }
@@ -644,7 +740,7 @@ edit_and_lock_based_on_options(){
 }
 
 prepare_backup_instructions(){
-  local -r firefox_dir="${0}"
+  local -r firefox_dir="${1}"
   
   echo 'You can restore the backup later on by typing these three commands:'
   echo "${formatting[cyan]}cp -p ${backup_targets[omni]@Q} '${firefox_dir}/${unpack_targets[omni]}'"
@@ -654,7 +750,7 @@ prepare_backup_instructions(){
 }
 
 clear_firefox_caches(){
-  local -r firefox_dir="${0}"
+  local -r firefox_dir="${1}"
   local -r cache_dir="$(getent passwd "${SUDO_USER:-${USER}}" | cut --delimiter=':' --fields='6')/.cache/mozilla/firefox"
   local startup_cache
   
@@ -674,7 +770,7 @@ clear_firefox_caches(){
 }
 
 fix_firefox(){
-  local -r firefox_dir="${0}"
+  local -r firefox_dir="${1}"
   local package_key
   
   for package_key in "${!unpack_targets[@]}"; do
@@ -682,7 +778,7 @@ fix_firefox(){
       && echo "Copying '${firefox_dir}/${unpack_targets[${package_key}]}' to ${backup_targets[${package_key}]@Q}."
   done
   
-  echo "Fixing Firefox ${firefox_dir@Q}…"
+  echo "Fixing Firefox ${firefox_dir@Q}."
   
   for package_key in "${!unpack_dirs[@]}"; do
     mkdir -- "${unpack_dirs[${package_key}]}" || terminate '1'
@@ -706,7 +802,7 @@ fix_firefox(){
 }
 
 offer_backup_restore(){
-  local -r firefox_dir="${0}"
+  local -r firefox_dir="${1}"
   local restore_backup_reply=''
   local package_key
   
@@ -731,99 +827,27 @@ offer_backup_restore(){
   backup_instructions=''
 }
 
-assign_backup_target(){
-  for package_key in "${!backup_targets[@]}"; do
-    backup_targets["${package_key}"]="$(initialize_backup_target "${package_key}")" || terminate "${?}"
-  done
-  
-  echo "Backup locations: ${backup_targets[omni]@Q} and ${backup_targets[browser_omni]@Q}"
-}
-
 process_firefox_dirs(){
   local firefox_dir
   local package_key
-  
-  if (("${#filtered_firefox_dirs[@]}" == 0)); then
-    echo "${formatting[red]}Error: No valid Firefox paths found.${formatting[reset]}" >&2
-    terminate '2'
-  fi
   
   for firefox_dir in "${filtered_firefox_dirs[@]}"; do
     assign_backup_target
     fix_firefox "${firefox_dir}"
     offer_backup_restore "${firefox_dir}"
+    cleanup
+    echo
   done
   
   readonly backup_targets
   readonly backup_instructions
 }
 
-apply_options(){
-  local enabled_fix_options=()
-  local fix_option
-  
-  # Prepare list of tweaks.
-  for fix_option in "${!settings[@]}"; do
-    if [[ "${fix_option}" =~ ^options\| && "${settings[${fix_option}]}" ]]; then
-      enabled_fix_options+=("${fix_option#options|}$([[ "${settings[${fix_option}]}" != 'on' ]] && echo "=${settings[${fix_option}]}")")
-    fi
-  done
-  
-  # Apply -q.
-  if [[ "${settings[quiet]}" ]]; then
-    needs_confirm_description_read=''
-    exec 1>'/dev/null'
-  fi
-  
-  # Display list of tweaks.
-  if [[ ! "${FIXFX_SWITCHED_TO_ROOT-}" ]]; then
-    echo "${description}"
-    
-    if (("${#enabled_fix_options[@]}" == 0)); then
-      echo "No tweaks enabled; repack omni.ja without edits"
-    else
-      echo "Enabled tweak$( (("${#enabled_fix_options[@]}" > 1)) && echo 's'): ${enabled_fix_options[*]@Q}"
-    fi
-  fi
-  
-  # Locate backup dir.
-  backup_dir="$(find_backup_dir)" || terminate "${?}"
-  
-  if [[ ! -e "${backup_dir}" ]]; then
-    backup_dir="$(dirname -- "${backup_dir}")"
-  fi
-}
-
-check_write_privileges(){
-  if [[ "${FIXFX_SWITCHED_TO_ROOT-}" ]]; then
-    needs_confirm_description_read=''
-  fi
-  
-  if [[ ! "${FIXFX_SWITCHED_TO_ROOT-}" ]]; then
-    echo "Firefox locations: ${filtered_firefox_dirs[*]@Q}"
-  fi
-  
-  root_required_reason="$(check_root_required "${backup_dir}")"
-  
-  if [[ "${root_required_reason}" && "${root_required_reason}" != "${reason_already_root}" ]]; then
-    echo "Continue as root: write access to ${root_required_reason@Q} is required."
-    require_root || terminate "${?}"
-    terminate '0'
-  #elif [[ ! "${settings[quiet]}" && ! "${FIXFX_SWITCHED_TO_ROOT-}" && "${is_interactive}" ]]; then
-    # needs_confirm_description_read='true' # TODO: Reconsider where to put this.
-  fi
-  
-  # UX.
-  if [[ "${needs_confirm_description_read}" ]]; then
-    read -p "Press [Enter] to continue. " -r
-  fi
-}
-
 trap -- 'terminate 130' 'INT' 'TERM'
-set_options "${@}" # settings empty → settings filled
-apply_options # `find_backup_dir` might throw → 1>'/dev/null' set, and `find_backup_dir` never throws
-collect_firefox_dirs # collected_firefox_dirs empty → collected_firefox_dirs filled
-filter_firefox_dirs # filtered_firefox_dirs empty → filtered_firefox_dirs filled
-check_write_privileges # root_required_reason empty, FIXFX_SWITCHED_TO_ROOT not set → root_required_reason filled, FIXFX_SWITCHED_TO_ROOT set
+set_options "${@}"
+apply_options
+collect_firefox_dirs
+filter_firefox_dirs
+prepare_processing
 process_firefox_dirs
 terminate '0'
