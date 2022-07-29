@@ -278,6 +278,10 @@ Script source, full documentation, bug reports at:
 set_options(){
   local firefox_dirs_count='0'
   
+  while [[ -v settings["firefox_dirs|${firefox_dirs_count}"] ]]; do
+    ((firefox_dirs_count++))
+  done
+  
   while (("${#}" > 0)); do
     if combined_short_options "${1}"; then
       set -- "${1:0:2}" "$(separate_flag_option_with_hyphen "${1:0:2}")${1:2}" "${@:2}"
