@@ -130,7 +130,7 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
   
 * `-y`, `--fix-only-youngest`
 
-  Pick only the Firefox install path from the collection with the latest modification / install date, to be fixed.
+  Pick only the Firefox install path from the collection with the most recent modification / install date, to be fixed.
 
 * `-o FIX_OPTION`, `--option FIX_OPTION`
 
@@ -174,7 +174,7 @@ There are no positional arguments for this script, so in fact, after `--`, _ever
 
 ### Interaction between `-a`, `-f`, `-q`, and `-y`
 
-Based on the options passed to the script, the script will first collect certain Firefox paths (e.g. the specified ones from `-f`, or the automatically found ones), then filter them (e.g. the youngest modification date using `-y`, or all of them).
+Based on the options passed to the script, the script will first collect certain Firefox paths (e.g. the specified ones from `-f`, or the automatically found ones), then filter them (e.g. the most recent modification date using `-y`, or all of them).
 The script will only process the filtered set of Firefox paths.
 
 | `-y` passed | `-a` passed | `-f` passed | Collection | Filter (resulting set) |
@@ -183,8 +183,8 @@ The script will only process the filtered set of Firefox paths.
 | ❌ | ❌ | ✔️ | ➕ Specified | All |
 | ❌ | ✔️ | ❌ | ➕ Automatically found | All |
 | ❌ | ✔️ | ✔️ | ➕ Automatically found<br/>➕ Specified | All |
-| ✔️ | ❌ | ✔️ | ➕ Specified | Only youngest |
 | ✔️ | ❌ or ✔️ | ❌ | ➕ Automatically found | Only youngest |
+| ✔️ | ❌ | ✔️ | ➕ Specified | Only youngest |
 | ✔️ | ✔️ | ✔️ | ➕ Automatically found<br/>➕ Specified | Only youngest |
 
 ### Available options
