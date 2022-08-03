@@ -113,18 +113,6 @@ is_option_key(){
   return '1'
 }
 
-fix_option_default_value(){
-  local -r fix_key="${1}"
-  
-  case "${fix_key}" in
-    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'clearSearchBarOnSubmit' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
-      echo 'on'
-      ;;
-    *)
-      echo ''
-  esac
-}
-
 separate_flag_option_with_hyphen(){
   local -r option_name="${1}"
   
@@ -154,7 +142,7 @@ fix_option_default_value(){
   local -r fix_key="${1}"
   
   case "${fix_key}" in
-    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
+    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'clearSearchBarOnSubmit' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
       echo 'on'
       ;;
     *)
@@ -218,7 +206,7 @@ FIX_OPTION_KEYs:
   
   clearSearchBarOnSubmit     Submitting a search from the separate search bar
                                clears its content; ${settings[options|clearSearchBarOnSubmit]:-off} by default.
-
+  
   doubleClickSelectsAll      Double-clicking the URL bar or the search bar
                                selects the entire input field; ${settings[options|doubleClickSelectsAll]:-off} by default.
   
@@ -855,3 +843,4 @@ filter_firefox_dirs
 prepare_processing
 process_firefox_dirs
 terminate '0'
+
