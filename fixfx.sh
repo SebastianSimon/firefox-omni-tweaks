@@ -29,6 +29,7 @@ declare -A settings=(
   [backup_dir]='/tmp'
   [fixOnlyYoungest]=''
   [options|preventClickSelectsAll]='on'
+  [options|clearSearchBarOnSubmit]=''
   [options|doubleClickSelectsAll]=''
   [options|autoSelectCopiesToClipboard]=''
   [options|autoCompleteCopiesToClipboard]=''
@@ -141,7 +142,7 @@ fix_option_default_value(){
   local -r fix_key="${1}"
   
   case "${fix_key}" in
-    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
+    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'clearSearchBarOnSubmit' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
       echo 'on'
       ;;
     *)
@@ -202,6 +203,9 @@ FIX_OPTION_KEYs:
                              Requires autoSelectCopiesToClipboard. Also copies
                                selection to clipboard when auto-completing
                                URLs; ${settings[options|autoCompleteCopiesToClipboard]:-off} by default.
+  
+  clearSearchBarOnSubmit     Submitting a search from the separate search bar
+                               clears its content; ${settings[options|clearSearchBarOnSubmit]:-off} by default.
   
   doubleClickSelectsAll      Double-clicking the URL bar or the search bar
                                selects the entire input field; ${settings[options|doubleClickSelectsAll]:-off} by default.
@@ -528,7 +532,7 @@ get_options(){
     explicit_script_params+=('-f' "${filtered_firefox_dir}")
   done
   
-  for fix_option in 'preventClickSelectsAll' 'doubleClickSelectsAll' 'autoSelectCopiesToClipboard' 'autoCompleteCopiesToClipboard' 'tabSwitchCopiesToClipboard' 'secondsSeekedByKeyboard'; do
+  for fix_option in 'preventClickSelectsAll' 'doubleClickSelectsAll' 'clearSearchBarOnSubmit' 'autoSelectCopiesToClipboard' 'autoCompleteCopiesToClipboard' 'tabSwitchCopiesToClipboard' 'secondsSeekedByKeyboard'; do
     explicit_script_params+=('-o' "${fix_option}=${settings[options|${fix_option}]}")
   done
   
@@ -688,7 +692,11 @@ edit_and_lock_based_on_options(){
     edit_file 'preventClickSelectsAll' 'browser_omni' "${urlbarinput_path}" 's/(this\._preventClickSelectsAll = )this\.focused;/\1true;/'
     edit_file 'preventClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/(this\._preventClickSelectsAll = )this\._textbox\.focused;/\1true;/'
   fi
-
+  
+  if [[ "${settings[options|clearSearchBarOnSubmit]-}" ]]; then
+    edit_file 'clearSearchBarOnSubmit' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' '/openTrustedLinkIn/s/$/textBox.value = "";/'
+  fi
+  
   if [[ "${settings[options|doubleClickSelectsAll]-}" ]]; then
     edit_file 'doubleClickSelectsAll' 'browser_omni' "${urlbarinput_path}" 's/(if \(event\.target\.id == SEARCH_BUTTON_ID\) \{)/if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        } else \1/'
     edit_file 'doubleClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' '/this\.addEventListener\("mousedown", event => \{/,/\}\);/ s/(\}\);)/        \n        if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        }\n      \1/'
@@ -835,3 +843,4 @@ filter_firefox_dirs
 prepare_processing
 process_firefox_dirs
 terminate '0'
+
