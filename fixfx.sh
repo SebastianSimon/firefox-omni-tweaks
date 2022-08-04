@@ -424,7 +424,7 @@ filter_include_all(){
   local collected_firefox_dir
   
   for collected_firefox_dir in "${!collected_firefox_dirs[@]}"; do
-    filtered_firefox_dirs+=("${collected_firefox_dir}")
+    filtered_firefox_dirs+=("$(readlink --canonicalize -- "${collected_firefox_dir}")")
   done
 }
 
@@ -735,8 +735,8 @@ prepare_backup_instructions(){
   local -r firefox_dir="${1}"
   
   echo 'You can restore the backup later on by typing these three commands:'
-  echo "${formatting[cyan]}cp -p ${backup_targets[omni]@Q} '${firefox_dir}/${unpack_targets[omni]}'"
-  echo "cp -p ${backup_targets[browser_omni]@Q} '${firefox_dir}/${unpack_targets[browser_omni]}'"
+  echo "${formatting[cyan]}cp -p '$(readlink --canonicalize -- "${backup_targets[omni]}")' '$(readlink --canonicalize -- "${firefox_dir}/${unpack_targets[omni]}")'"
+  echo "cp -p '$(readlink --canonicalize -- "${backup_targets[browser_omni]}")' '$(readlink --canonicalize -- "${firefox_dir}/${unpack_targets[browser_omni]}")'"
   echo "touch '${firefox_dir}/browser/.purgecaches'${formatting[reset]}"
   echo "You can also copy the two files in '$(find_backup_dir)' to another backup location."
 }
@@ -751,7 +751,7 @@ clear_firefox_caches(){
     
     for startup_cache in "${cache_dir}/"*'/startupCache'; do
       rm --recursive --force -- "${startup_cache}" 2>'/dev/null' \
-        && echo "Clearing startup cache in '$(dirname -- "${startup_cache}")'."
+        && echo "Clearing startup cache in '$(readlink --canonicalize -- "$(dirname -- "${startup_cache}")")'."
     done
     
     shopt -u 'nullglob'
@@ -764,10 +764,14 @@ clear_firefox_caches(){
 fix_firefox(){
   local -r firefox_dir="${1}"
   local package_key
+  local unpack_target
+  local backup_target
   
   for package_key in "${!unpack_targets[@]}"; do
-    cp --preserve -- "${firefox_dir}/${unpack_targets[${package_key}]}" "${backup_targets[${package_key}]}" \
-      && echo "Copying '${firefox_dir}/${unpack_targets[${package_key}]}' to ${backup_targets[${package_key}]@Q}."
+    unpack_target="$(readlink --canonicalize -- "${firefox_dir}/${unpack_targets[${package_key}]}")"
+    backup_target="$(readlink --canonicalize -- "${backup_targets[${package_key}]}")"
+    cp --preserve -- "${unpack_target}" "${backup_target}" \
+      && echo "Copying ${unpack_target@Q} to ${backup_target@Q}."
   done
   
   echo "Fixing Firefox ${firefox_dir@Q}."
@@ -797,6 +801,8 @@ offer_backup_restore(){
   local -r firefox_dir="${1}"
   local restore_backup_reply=''
   local package_key
+  local backup_target
+  local unpack_target
   
   if [[ ! "${settings[quiet]}" && "${is_interactive}" ]]; then
     read -p 'Press [Enter] to exit. Press [r], then [Enter] to restore the backup. ' -r restore_backup_reply
@@ -805,11 +811,13 @@ offer_backup_restore(){
   if [[ "${restore_backup_reply}" =~ [Rr] ]]; then
     for package_key in "${!backup_targets[@]}"; do
       if [[ -f "${backup_targets[${package_key}]}" ]]; then
-        cp --preserve -- "${backup_targets[${package_key}]}" "${firefox_dir}/${unpack_targets[${package_key}]}" \
-          && echo "Copying ${backup_targets[${package_key}]@Q} to '${firefox_dir}/${unpack_targets[${package_key}]}'."
+        backup_target="$(readlink --canonicalize -- "${backup_targets[${package_key}]}")"
+        unpack_target="$(readlink --canonicalize -- "${firefox_dir}/${unpack_targets[${package_key}]}")"
+        cp --preserve -- "${backup_target}" "${firefox_dir}/${unpack_targets[${package_key}]}" \
+          && echo "Copying ${backup_target@Q} to ${unpack_target@Q}."
         clear_firefox_caches "${firefox_dir}"
       else
-        echo "The original backup at ${backup_targets[${package_key}]@Q} no longer exists."
+        echo "The original backup at ${backup_target@Q} no longer exists."
       fi
     done
   else
@@ -843,4 +851,3 @@ filter_firefox_dirs
 prepare_processing
 process_firefox_dirs
 terminate '0'
-
