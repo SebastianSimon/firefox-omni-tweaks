@@ -26,15 +26,15 @@ declare -A -r formatting=(
 declare -A settings=(
   # Begin presets.
   [addAllFound]=''
-  [backup_dir]='/tmp'
+  [backupDir]='/tmp'
   [fixOnlyYoungest]=''
-  [options|preventClickSelectsAll]='on'
+  [options|autoCompleteCopiesToClipboard]=''
+  [options|autoSelectCopiesToClipboard]=''
   [options|clearSearchBarOnSubmit]=''
   [options|doubleClickSelectsAll]=''
-  [options|autoSelectCopiesToClipboard]=''
-  [options|autoCompleteCopiesToClipboard]=''
-  [options|tabSwitchCopiesToClipboard]=''
+  [options|preventClickSelectsAll]='on'
   [options|secondsSeekedByKeyboard]=''
+  [options|tabSwitchCopiesToClipboard]=''
   [quiet]=''
   # End presets.
 )
@@ -132,7 +132,8 @@ assert_key_option_has_value(){
 }
 
 show_usage(){
-  echo "Usage: ${BASH_SOURCE[0]} [OPTION...]
+  echo "
+Usage: ${BASH_SOURCE[0]} [OPTION...]
 OPTIONs '-f', '--firefox', '-b', and '--backup' need a DIR value.
 OPTIONs '-o' and '--option' need a FIX_OPTION value.
 Type '${BASH_SOURCE[0]} --help' for more information."
@@ -142,7 +143,7 @@ fix_option_default_value(){
   local -r fix_key="${1}"
   
   case "${fix_key}" in
-    'autoSelectCopiesToClipboard' | 'autoCompleteCopiesToClipboard' | 'clearSearchBarOnSubmit' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
+    'autoCompleteCopiesToClipboard' | 'autoSelectCopiesToClipboard' | 'clearSearchBarOnSubmit' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
       echo 'on'
       ;;
     *)
@@ -184,7 +185,7 @@ OPTIONs:
   -b DIR, --backup DIR       Store backup of internal Firefox files 'omni.ja'
                                and 'browser/omni.ja' in DIR; directory is
                                created if it doesn’t exist, but parent
-                               directory must exist; default: ${settings[backup_dir]@Q}.
+                               directory must exist; default: ${settings[backupDir]@Q}.
   
   -q, --quiet                Do not log every step; do not ask for
                                confirmation.
@@ -192,17 +193,17 @@ OPTIONs:
   -h, -?, --help, --?        Show this help and exit.
 
 FIX_OPTION_KEYs:
+  autoCompleteCopiesToClipboard
+                             Requires autoSelectCopiesToClipboard. Also copies
+                               selection to clipboard when auto-completing
+                               URLs; ${settings[options|autoCompleteCopiesToClipboard]:-off} by default.
+  
   autoSelectCopiesToClipboard
                              Copy selection to clipboard always when text in
                                the URL bar or search bar is selected, e.g.
                                when pressing [Ctrl] + [L] or [F6], but not
                                when switching tabs or when auto-completing
                                URLs; ${settings[options|autoSelectCopiesToClipboard]:-off} by default.
-  
-  autoCompleteCopiesToClipboard
-                             Requires autoSelectCopiesToClipboard. Also copies
-                               selection to clipboard when auto-completing
-                               URLs; ${settings[options|autoCompleteCopiesToClipboard]:-off} by default.
   
   clearSearchBarOnSubmit     Submitting a search from the separate search bar
                                clears its content; ${settings[options|clearSearchBarOnSubmit]:-off} by default.
@@ -266,7 +267,7 @@ Script source, full documentation, bug reports at:
 set_options(){
   local firefox_dirs_count='0'
   
-  while [[ -v settings["firefox_dirs|${firefox_dirs_count}"] ]]; do
+  while [[ -v settings["firefoxDirs|${firefox_dirs_count}"] ]]; do
     ((firefox_dirs_count++))
   done
   
@@ -277,7 +278,6 @@ set_options(){
     
     assert_key_option_has_value "${@}" || {
       echo "${formatting[red]}Error: No value provided for option ${1@Q}.${formatting[reset]}" >&2
-      echo
       show_usage
       terminate '2'
     }
@@ -287,11 +287,17 @@ set_options(){
         break
         ;;
       '-b' | '--backup')
-        settings[backup_dir]="${2}"
+        if [[ ! "${2}" ]]; then
+          echo "${formatting[red]}Error: Backup path cannot be empty.${formatting[reset]}" >&2
+          show_usage
+          terminate '2'
+        fi
+        
+        settings[backupDir]="${2}"
         shift
         ;;
       '-f' | '--firefox')
-        settings["firefox_dirs|${firefox_dirs_count}"]="${2}"
+        settings["firefoxDirs|${firefox_dirs_count}"]="${2}"
         ((firefox_dirs_count++))
         
         shift
@@ -374,11 +380,11 @@ apply_options(){
 collect_specified(){
   local firefox_dirs_count='0'
   
-  while [[ -v settings["firefox_dirs|${firefox_dirs_count}"] ]]; do
-    if [[ -f "${settings["firefox_dirs|${firefox_dirs_count}"]}/omni.ja" && -f "${settings["firefox_dirs|${firefox_dirs_count}"]}/browser/omni.ja" ]]; then
-      collected_firefox_dirs["${settings["firefox_dirs|${firefox_dirs_count}"]}"]='1'
+  while [[ -v settings["firefoxDirs|${firefox_dirs_count}"] ]]; do
+    if [[ "${settings["firefoxDirs|${firefox_dirs_count}"]}" && -f "${settings["firefoxDirs|${firefox_dirs_count}"]}/omni.ja" && -f "${settings["firefoxDirs|${firefox_dirs_count}"]}/browser/omni.ja" ]]; then
+      collected_firefox_dirs["${settings["firefoxDirs|${firefox_dirs_count}"]}"]='1'
     else
-      echo "${formatting[yellow]}Warning: ${settings["firefox_dirs|${firefox_dirs_count}"]@Q} is not a Firefox installation path.${formatting[reset]}" >&2
+      echo "${formatting[yellow]}Warning: ${settings["firefoxDirs|${firefox_dirs_count}"]@Q} is not a Firefox installation path.${formatting[reset]}" >&2
     fi
     
     ((firefox_dirs_count++))
@@ -389,7 +395,7 @@ collect_all(){
   local found_firefox_dir
   local found_firefox_dirs
 
-  if [[ ! "${is_interactive}" || "${settings[addAllFound]}" || ! -v settings['firefox_dirs|0'] ]]; then
+  if [[ ! "${is_interactive}" || "${settings[addAllFound]}" || ! -v settings['firefoxDirs|0'] ]]; then
     mapfile -t found_firefox_dirs < <(printf "%s" "$(whereis -b 'firefox' 'firefox-esr' | sed --regexp-extended --expression='s/^.*?:\s*//g' | xargs | tr ' ' '\n')")
     
     for found_firefox_dir in "${found_firefox_dirs[@]}"; do
@@ -468,7 +474,7 @@ filter_multiple_choice(){
 filter_firefox_dirs(){
   if [[ "${settings[fixOnlyYoungest]}" ]]; then
     filter_only_youngest
-  elif [[ "${is_interactive}" && ! "${settings[addAllFound]}" && ! -v settings['firefox_dirs|0'] && ! "${settings[quiet]}" ]] && (("${#collected_firefox_dirs[@]}" > 1)); then
+  elif [[ "${is_interactive}" && ! "${settings[addAllFound]}" && ! -v settings['firefoxDirs|0'] && ! "${settings[quiet]}" ]] && (("${#collected_firefox_dirs[@]}" > 1)); then
     needs_confirm_description_read=''
     filter_multiple_choice
   else
@@ -477,10 +483,10 @@ filter_firefox_dirs(){
 }
 
 find_backup_dir(){
-  if [[ ! -e "${settings[backup_dir]}" && -d "$(dirname -- "${settings[backup_dir]}")" || -d "${settings[backup_dir]}" ]]; then
-    readlink --canonicalize -- "${settings[backup_dir]}"
+  if [[ ! -e "${settings[backupDir]}" && -d "$(dirname -- "${settings[backupDir]}")" || -d "${settings[backupDir]}" ]]; then
+    readlink --canonicalize -- "${settings[backupDir]}"
   else
-    echo "${formatting[red]}Error: ${settings[backup_dir]@Q} has no parent directory or is not a directory itself.${formatting[reset]}" >&2
+    echo "${formatting[red]}Error: ${settings[backupDir]@Q} has no parent directory or is not a directory itself.${formatting[reset]}" >&2
     
     return '2'
   fi
@@ -526,13 +532,13 @@ get_options(){
   local filtered_firefox_dir
   local fix_option
   
-  explicit_script_params+=('-b' "${settings[backup_dir]}")
+  explicit_script_params+=('-b' "${settings[backupDir]}")
   
   for filtered_firefox_dir in "${filtered_firefox_dirs[@]}"; do
     explicit_script_params+=('-f' "${filtered_firefox_dir}")
   done
   
-  for fix_option in 'preventClickSelectsAll' 'doubleClickSelectsAll' 'clearSearchBarOnSubmit' 'autoSelectCopiesToClipboard' 'autoCompleteCopiesToClipboard' 'tabSwitchCopiesToClipboard' 'secondsSeekedByKeyboard'; do
+  for fix_option in 'autoCompleteCopiesToClipboard' 'autoSelectCopiesToClipboard' 'clearSearchBarOnSubmit' 'doubleClickSelectsAll' 'preventClickSelectsAll' 'secondsSeekedByKeyboard' 'tabSwitchCopiesToClipboard'; do
     explicit_script_params+=('-o' "${fix_option}=${settings[options|${fix_option}]}")
   done
   
@@ -584,12 +590,12 @@ prepare_processing(){
 
 initialize_backup_target(){
   local prefix="${1}"
-  local -r start="${settings[backup_dir]}/${prefix}-"
+  local -r start="${settings[backupDir]}/${prefix}-"
   local -r end='.ja~'
   local incremental_number='0'
   
-  if [[ ! -e "${settings[backup_dir]}" && -d "$(dirname -- "${settings[backup_dir]}")" ]]; then
-    mkdir "${settings[backup_dir]}"
+  if [[ ! -e "${settings[backupDir]}" && -d "$(dirname -- "${settings[backupDir]}")" ]]; then
+    mkdir "${settings[backupDir]}"
   fi
   
   find_backup_dir 1>'/dev/null' || return "${?}"
