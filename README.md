@@ -31,13 +31,13 @@ It should not be executed a second time before another Firefox update.
 
 The script automatically modifies the `omni.ja` files and the `browser/omni.ja` files, and clears the browsers’ startup caches and creates `.purgecaches` files, in order to assure that the changes are properly applied when starting Firefox.
 
-This step-by-step guide describes default script execution, i.e. without any options passed; you can pass [options](#options-in-detail) listed below.
+This step-by-step guide describes default script execution, i.e. without any presets or options passed. You can use the [web app] to choose custom presets for the script or pass [options](#options-in-detail) listed below.
 
 Also see [my Super User answer][super-user] for detailed steps.
 
 ### Before using the script for the _first_ time
 
-1. [Download][sh] the script.
+1. Download the script from the [original source][sh].
 2. Set the script as a runnable file.
 
 ### Before running the script
@@ -96,9 +96,26 @@ cp -p /tmp/browser_omni-n.ja~ "$firefox_dir/browser/omni.ja" # Replace `n` by th
 touch "$firefox_dir/browser/.purgecaches"                    # This is necessary only here. A "$firefox_dir/.purgecaches" is ignored.
 ```
 
+## Using the web app
+
+The [web app] lets you choose all the options and tweaks that you want and put them into a customized shell script as presets.
+
+Once you’ve downloaded the customized script, set it as a runnable file, make sure Firefox is up-to-date and closed, and then run the script ([steps 2, 3, and 4](#how-to-run-the-script)).
+The script should then run exactly as specified.
+You can make sure if the presets are set correctly: they’re in the `settings` array between `# Begin presets.` and `# End presets.`.
+
+You can theoretically still pass command line options to the script; these will get additionally applied.
+For example, if you specified a `firefoxDirs|0` in the web app, passing another `-f` directory will add it as `firefoxDirs|1`.
+Opt-in options such as `-q`, `-a`, or `-y` cannot be disabled once they’ve been enabled.
+A `-b` or `-o` option is overridden by a later instance of the same option.
+
+### Running the web app
+
+If you fork this repo, the web app can be served using a simple HTTP server, e.g. [`http-server`](https://www.npmjs.com/package/http-server) from NPM.
+
 ## Options in detail
 
-As usual, short options can be combined, e.g. `-qb '/tmp'` which expands into `-q -b '/tmp'`.
+As usual, short options can be combined, e.g. `-qyab '/tmp'` which expands into `-q -y -a -b '/tmp'`.
 A `--` marks the end of options, meaning every option after that will be ignored.
 There are no positional arguments for this script, so in fact, after `--`, _everything_ is ignored.
 
@@ -263,6 +280,7 @@ Indeed, several months later, some users have requested a few other features, so
 Since then, the repo has been renamed to its current name.
 
 
+  [web app]: https://sebastiansimon.github.io/firefox-omni-tweaks
   [super-user]: https://superuser.com/a/1559926/751213
   [regression-bug]: https://bugzilla.mozilla.org/show_bug.cgi?id=333714
   [bug]: https://bugzilla.mozilla.org/show_bug.cgi?id=1621570

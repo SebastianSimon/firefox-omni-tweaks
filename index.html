@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="shortcut icon" href="favicon.svg"/>
+  <link rel="stylesheet" href="web/content.css"/>
+  <meta name="description" content="Download a customized shell script to modify Firefox."/>
+  <meta name="keywords" content="firefox,ux,workaround,url-bar"/>
+  <meta name="language" content="English"/>
+  <meta name="revisit-after" content="1 day"/>
+  <meta name="robots" content="index,follow"/>
+  <meta name="viewport" content="initial-scale=1"/>
+  <title>Choose your own Firefox omni.ja tweaks</title>
+  
+  <script type="module" src="web/content.mjs"></script>
+</head>
+
+<body role="application">
+  <header>
+    <h1>Custom Firefox tweaks</h1>
+    <p>Pick and choose the settings to experience Firefox the way <em>you</em> want to and download the <code>fixfx.sh</code> with your custom presets. Questions? Ideas? See the code and more on <a class="inlineFlowRootLink" href="https://github.com/SebastianSimon/firefox-omni-tweaks" title="GitHub repository">
+      <svg class="gitHub" version="1.1" viewBox="0 0 126 38" xmlns="http://www.w3.org/2000/svg" aria-label="GitHub">
+        <g transform="matrix(1.3333 0 0 -1.3333 45.263 769.62)">
+          <g transform="translate(.62715 -.20326)" fill="#fff">
+            <path d="m-19.546 577.22c-7.9529 0-14.401-6.448-14.401-14.403 0-6.3632 4.1263-11.761 9.8493-13.666 0.72058-0.13173 0.98316 0.31299 0.98316 0.69494 0 0.34128-0.01238 1.2475-0.01945 2.4491-4.006-0.86999-4.8513 1.931-4.8513 1.931-0.65515 1.664-1.5994 2.1069-1.5994 2.1069-1.3076 0.89298 0.09902 0.8753 0.09902 0.8753 1.4456-0.10168 2.2059-1.4845 2.2059-1.4845 1.2847-2.2006 3.3712-1.5649 4.1917-1.1962 0.13085 0.93012 0.50219 1.5649 0.9142 1.9248-3.1979 0.36338-6.5603 1.5994-6.5603 7.1182 0 1.572 0.56143 2.8576 1.4827 3.8646-0.14854 0.36427-0.64277 1.8284 0.14058 3.8115 0 0 1.2095 0.38725 3.961-1.4765 1.1485 0.32006 2.381 0.47921 3.6055 0.48451 1.2228-5e-3 2.4553-0.16445 3.6055-0.48451 2.7497 1.8638 3.9565 1.4765 3.9565 1.4765 0.786-1.9831 0.29177-3.4473 0.14323-3.8115 0.92304-1.007 1.4809-2.2926 1.4809-3.8646 0-5.533-3.3677-6.7504-6.5762-7.1067 0.51722-0.44472 0.97786-1.3236 0.97786-2.6675 0-1.9248-0.01768-3.4782-0.01768-3.9503 0-0.38549 0.25905-0.83375 0.99024-0.69317 5.7186 1.9089 9.8414 7.303 9.8414 13.664 0 7.9546-6.4489 14.403-14.404 14.403" fill-rule="evenodd"/>
+            <path d="m7.3608 571.09c-3.2871 0-6.6592-1.3996-6.6592-8.1226 0-6.7233 3.86-7.7241 7.1133-7.7241 2.6936 0 4.3286 1.1499 4.3286 1.1499 0.06735 0.0372 0.07471 0.13266 0.07471 0.17578v7.5073c0 0.12706-0.10292 0.23145-0.22998 0.23145h-4.9248c-0.12706 0-0.22998-0.10439-0.22998-0.23145v-2.4067c0-0.12706 0.10292-0.22998 0.22998-0.22998h1.9204v-2.9912s-0.43056-0.14795-1.623-0.14795c-1.4067 0-3.3721 0.51386-3.3721 4.8354 0 4.3224 2.0456 4.8911 3.9668 4.8911 1.663 0 2.3801-0.29238 2.8359-0.43359 0.14333-0.0438 0.27539 0.0985 0.27539 0.22559l0.54932 2.3262c0 0.0595-0.02021 0.13153-0.08789 0.18017-0.18514 0.13227-1.314 0.76465-4.1675 0.76465zm19.45-0.57422c-0.12608 0-0.22852-0.10324-0.22852-0.23144v-14.508c0-0.12804 0.10243-0.23291 0.22852-0.23291h2.7729c0.1269 0 0.22852 0.10487 0.22852 0.23291v6.2051h4.3213l-0.0073-6.2051c0-0.12804 0.10292-0.23291 0.22998-0.23291h2.7788c0.1269 0 0.22819 0.10487 0.22852 0.23291v14.508c0 0.1282-0.10146 0.23144-0.22852 0.23144h-2.7729c-0.12673 0-0.22852-0.10324-0.22852-0.23144v-5.3584h-4.3213v5.3584c0 0.1282-0.10162 0.23144-0.22852 0.23144zm22.975 0c-0.12641 0-0.22852-0.10324-0.22852-0.23144v-14.508c0-0.12804 0.10178-0.23291 0.22852-0.23291h1.9292c0.08687 0 0.1535 0.0446 0.20215 0.12304 0.04799 0.0779 0.11719 0.66944 0.11719 0.66944s1.1364-1.0781 3.2886-1.0781c2.5268 0 3.9756 1.282 3.9756 5.7539 0 4.4719-2.3137 5.0566-3.8774 5.0566-1.5626 0-2.6265-0.69727-2.6265-0.69727v4.9131c0 0.1282-0.10227 0.23144-0.22852 0.23144zm-34.354-0.33105c-0.98653 0-1.7886-0.80645-1.7886-1.8047 0-0.99743 0.80205-1.8062 1.7886-1.8062 0.9875 0 1.7871 0.80872 1.7871 1.8062 0 0.99824-0.7996 1.8047-1.7871 1.8047zm4.4663-1.5146c-0.11014 0-0.16846-0.0492-0.16846-0.15527v-2.8389s-1.4201-0.34296-1.5161-0.37061c-0.09566-0.0278-0.16699-0.1161-0.16699-0.22119v-1.7842c0-0.12836 0.10325-0.23144 0.22998-0.23144h1.4531v-4.2935c0-3.188 2.2352-3.501 3.7441-3.501 0.68963 0 1.5147 0.2222 1.6509 0.27247 0.08232 0.0303 0.13037 0.1156 0.13037 0.208l0.0029 1.9629c0 0.12803-0.10829 0.23145-0.22998 0.23145-0.1212 0-0.43227-0.0498-0.75146-0.0498-1.0215 0-1.3667 0.47489-1.3667 1.0898v4.0796h2.0801c0.12673 0 0.22852 0.10308 0.22852 0.23144v2.2339c0 0.12803-0.10178 0.23145-0.22852 0.23145h-2.0801l-0.0029 2.748c0 0.10396-0.05393 0.15674-0.17432 0.15674zm-5.8711-2.9062c-0.1269 0-0.24023-0.13075-0.24023-0.25781v-9.5947c0-0.28193 0.17686-0.36474 0.4043-0.36474h2.4902c0.27315 0 0.33984 0.13454 0.33984 0.3706v9.6167c0 0.12722-0.10309 0.22998-0.22998 0.22998zm24.926-0.0205c-0.12592 0-0.22852-0.10487-0.22852-0.23291v-6.6724c0-2.8854 1.6068-3.5918 3.8188-3.5918 1.8149 0 3.2783 1.0034 3.2783 1.0034s0.06935-0.52916 0.10108-0.5918c0.0314-0.0625 0.11332-0.12597 0.20215-0.12597l1.7769 9e-3c0.12592 0 0.22998 0.1039 0.22998 0.23144l-0.0015 9.7383c0 0.12804-0.10325 0.23291-0.22998 0.23291h-2.751c-0.12624 0-0.22852-0.10487-0.22852-0.23291v-7.1133s-0.69984-0.51123-1.6919-0.51123-1.2554 0.44966-1.2554 1.4209v6.2036c0 0.12804-0.10227 0.23291-0.22852 0.23291zm15.571-2.3188c0.84646-0.0301 1.5762-0.51753 1.5762-2.5854 0-2.4924-0.43013-2.9845-1.7651-2.9443-0.95432 0.0291-1.6025 0.46143-1.6025 0.46143v4.5952s0.63887 0.39147 1.4224 0.46143c0.12384 0.0111 0.24822 0.016 0.36914 0.0117z"/>
+          </g>
+        </g>
+      </svg>
+    </a>.</p>
+  </header>
+  <form id="settings">
+    <fieldset>
+      <legend><h2>Click selection</h2></legend>
+      <div class="fieldsetContent">
+        <section class="settings">
+          <h3>Settable defaults</h3>
+          <label id="preventClickSelectsAll" class="setting" data-type="composite switch" data-preset-key="options" data-preset-sub-key="preventClickSelectsAll" data-short-cli-key="-o" data-long-cli-key="--option">
+            <span><input type="checkbox"/> <code class="settingKey">preventClickSelectsAll</code>:</span>
+            <span>Disable single-click selecting all in URL bar and search bar.</span>
+          </label>
+          <label id="doubleClickSelectsAll" class="setting" data-type="composite switch" data-preset-key="options" data-preset-sub-key="doubleClickSelectsAll" data-short-cli-key="-o" data-long-cli-key="--option">
+            <span><input type="checkbox"/> <code class="settingKey">doubleClickSelectsAll</code>:</span>
+            <span>Double-click selects all in URL bar and search bar.</span>
+          </label>
+        </section>
+        <section class="result" aria-live="polite">
+          <h3>Result</h3>
+          <p id="afterSingleClick">After a single click, <strong>everything is selected</strong>: <img src="web/img/All%20selected.png" alt="URL bar is focused; everything is selected."/></p>
+          <p id="afterDoubleClick">After a double-click, <strong>a single word is selected</strong>: <img src="web/img/Word%20selected.png" alt="URL bar is focused; the double-clicked word is selected."/></p>
+          <p>After a triple-click, <strong>everything is selected</strong>: <img src="web/img/All%20selected.png" alt="URL bar is focused; everything is selected."/></p>
+        </section>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend><h2>Selection clipboard</h2></legend>
+      <div class="fieldsetContent">
+        <section class="settings">
+          <h3>Settable defaults</h3>
+          <label id="autoSelectCopiesToClipboard" class="setting" data-type="composite switch" data-preset-key="options" data-preset-sub-key="autoSelectCopiesToClipboard" data-short-cli-key="-o" data-long-cli-key="--option">
+            <span><input type="checkbox"/> <code class="settingKey">autoSelectCopiesToClipboard</code>:</span>
+            <span>Automatic selection of URL bar or search bar gets copied to clipboard in usual cases. Middle-click inserts the copied text.</span>
+          </label>
+          <label id="tabSwitchCopiesToClipboard" class="setting" data-type="composite switch" data-preset-key="options" data-preset-sub-key="tabSwitchCopiesToClipboard" data-short-cli-key="-o" data-long-cli-key="--option">
+            <span><input type="checkbox"/> <code class="settingKey">tabSwitchCopiesToClipboard</code>:</span>
+            <span>Automatic selection of URL bar is also copied when switching tabs.</span>
+          </label>
+          <label id="autoCompleteCopiesToClipboard" class="setting" data-type="composite switch" data-preset-key="options" data-preset-sub-key="autoCompleteCopiesToClipboard" data-short-cli-key="-o" data-long-cli-key="--option">
+            <span><input type="checkbox"/> <code class="settingKey">autoCompleteCopiesToClipboard</code>:</span>
+            <span>Automatic selection is also copied when auto-completing URLs.</span>
+          </label>
+        </section>
+        <section class="result" aria-live="polite">
+          <h3>Result</h3>
+          <p id="afterURLBarFocus">Pressing <kbd aria-description="control">Ctrl</kbd> <kbd>L</kbd> or <kbd>F6</kbd> selects the URL bar, <strong>but does not copy to clipboard (i.e. a subsequent middle-click paste will not paste the URL)</strong>: <img src="web/img/Focused%20and%20selected.png" alt="URL bar is focused; everything is selected, but nothing copied to the selection clipboard."/></p>
+          <p id="afterSearchBarFocus">Pressing <kbd aria-description="control">Ctrl</kbd> <kbd>K</kbd> selects the search bar, <strong>but does not copy to clipboard</strong>: <img src="web/img/Search%20bar%20selected,%20suggestions%20closed.png" alt="Search bar is focused; everything is selected, but nothing copied to the selection clipboard."/></p>
+          <hr/>
+          <p id="afterTabSwitch">If the URL bar is focused in a tab … <img src="web/img/Focused%20B.png" alt="A tab is shown; URL bar is focused"/> … and you switch from a different tab … <img src="web/img/Unfocused%20A.png" alt="A different tab is shown; URL bar is not focused"/> … to the tab which has the focused URL bar, then sometimes the URL bar is selected, <strong>but its content is not copied to clipboard</strong>: <img src="web/img/Selected%20B.png" alt="A tab is shown; URL bar is selected, but nothing copied to the selection clipboard."/></p>
+          <hr/>
+          <p id="afterURLBarAutoComplete">Typing a URL auto-completes the rest, <strong>but the selection is not copied to clipboard</strong>: <img src="web/img/Auto-complete.png" alt="The start of a URL is typed; the rest of the URL is selected, but nothing copied to the selection clipboard."/></p>
+        </section>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend><h2>Video player</h2></legend>
+      <div class="fieldsetContent">
+        <section class="settings">
+          <h3>Settable defaults</h3>
+          <label id="secondsSeekedByKeyboard" class="setting" data-type="composite switch defaultIfEmpty" data-preset-key="options" data-preset-sub-key="secondsSeekedByKeyboard" data-short-cli-key="-o" data-long-cli-key="--option">
+            <span><code class="settingKey">secondsSeekedByKeyboard</code>: <input type="number"/></span>
+            <span>Number of seconds skipped backward or forward in the built-in video player or the Picture-in-Picture player when pressing left and right keys.</span>
+          </label>
+        </section>
+        <section class="result" aria-live="polite">
+          <h3>Result</h3>
+          <p id="afterSeekInBuiltInPlayer">Pressing <kbd aria-description="left arrow key">←</kbd> seeks backward, pressing <kbd aria-description="right arrow key">→</kbd> seeks forward by <strong>the default amount of seconds</strong> in the built-in video player (a <code>&lt;video&gt;</code> element): <img src="web/img/Built-in%20Video%20Player.png" alt="The built-in video player, here shown with controls on."/></p>
+          <p id="afterSeekInPiPPlayer">Pressing <kbd aria-description="left arrow key">←</kbd> seeks backward, pressing <kbd aria-description="right arrow key">→</kbd> seeks forward by <strong>the default amount of seconds</strong> in the Picture-in-Picture video player: <img src="web/img/PictureInPicture.png" alt="Picture-in-Picture video player, here shown with controls."/></p>
+        </section>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend><h2>Search bar</h2></legend>
+      <div class="fieldsetContent">
+        <section class="settings">
+          <h3>Settable defaults</h3>
+          <label id="clearSearchBarOnSubmit" class="setting" data-type="composite switch" data-preset-key="options" data-preset-sub-key="clearSearchBarOnSubmit" data-short-cli-key="-o" data-long-cli-key="--option">
+            <span><input type="checkbox"/> <code class="settingKey">clearSearchBarOnSubmit</code>:</span>
+            <span>Clear search bar after submitting search.</span>
+          </label>
+        </section>
+        <section class="result" aria-live="polite">
+          <h3>Result</h3>
+          <p id="afterSubmittingSearch">After typing a query into the search bar … <img src="web/img/Search%20bar%20not%20selected,%20suggestions%20open.png" alt="Search bar is focused, something is typed into it, and suggestions are shown below"/> … submitting the search (e.g. by hitting <kbd>Enter</kbd>, clicking the arrow icon, one of the suggestions, or a search engine) <strong>does not clear the search bar</strong>: <img src="web/img/Search%20bar%20not%20selected,%20suggestions%20closed.png" alt="Search bar is focused, the previously typed query remains."/></p>
+        </section>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend><h2>Other script options</h2></legend>
+      <div class="fieldsetContent">
+        <section class="settings">
+          <h3>Settable defaults</h3>
+          <label id="quiet" class="setting" data-preset-key="quiet" data-short-cli-key="-q" data-long-cli-key="--quiet">
+            <span><input type="checkbox"/> <code class="settingKey">quiet</code>:</span>
+            <span>The shell script doesn’t produce standard output and doesn’t ask for confirmation.</span>
+          </label>
+          <label id="addAllFound" class="setting" data-preset-key="addAllFound" data-short-cli-key="-a" data-long-cli-key="--add-all-found">
+            <span><input type="checkbox"/> <code class="settingKey">addAllFound</code>:</span>
+            <span>Force script to add automatically found Firefox directories to the selection.</span>
+          </label>
+          <label id="fixOnlyYoungest" class="setting" data-preset-key="fixOnlyYoungest" data-short-cli-key="-y" data-long-cli-key="--fix-only-youngest">
+            <span><input type="checkbox"/> <code class="settingKey">fixOnlyYoungest</code>:</span>
+            <span>Tweak only Firefox directory that was most recently updated.</span>
+          </label>
+          <ol id="firefoxDirs" start="0" data-type="sequential" data-preset-key="firefoxDirs" data-short-cli-key="-f" data-long-cli-key="--firefox" aria-live="assertive">
+            <template><li><label class="setting" data-preset-sub-key=""><span><code class="settingKey">firefoxDirs|</code>: <input type="text"/></span><span>Path to a Firefox directory; both <code>./omni.ja</code> and <code>./browser/omni.ja</code> must be contained within.</span></label><input class="removeButton" type="button" value="➖" title="Remove this entry."/></li></template>
+            <li><label title="Add a new entry.">Where is Firefox located? Specify a directory (<code class="settingKey">firefoxDirs</code>). <input class="addButton" type="button" value="➕"/></label></li>
+          </ol>
+          <label id="backupDir" class="setting" data-preset-key="backupDir" data-short-cli-key="-b" data-long-cli-key="--backup">
+            <span><code class="settingKey">backupDir</code>: <input type="text"/></span>
+            <span>Default backup path.</span>
+          </label>
+        </section>
+        <section class="result" aria-live="polite">
+          <h3>Result</h3>
+          <p id="whenScriptRuns">When running the script, <strong>the script will automatically find all Firefox directories. If it finds more than one and the script was run interactively, it’ll ask you which ones you want to tweak; otherwise, it’ll tweak all of them</strong>. The effects of these options are <a href="https://github.com/SebastianSimon/firefox-omni-tweaks/blob/master/README.md#interaction-between--a--f--q-and--y">shown in a table in the documentation</a>.</p>
+        </section>
+      </div>
+    </fieldset>
+    <div class="resultsBox">
+      <fieldset class="results">
+        <legend><h2>Customized script</h2></legend>
+        <div class="fieldsetContent">
+          <section class="downloadSection">
+            <h3>Download</h3>
+            <p>
+              <a id="downloadLink" class="downloadLink" href="fixfx.sh" download="fixfx.sh">Download customized <code>fixfx.sh</code></a>
+              <a id="programmaticDownloadLink" hidden></a>
+            </p>
+            <p>What next? Follow the steps in the <a href="https://github.com/SebastianSimon/firefox-omni-tweaks#using-the-web-app">Documentation</a>.</p>
+          </section>
+          <section class="commandLineSection">
+            <h3>Equivalent command line <span class="info" title="This command line just serves as a reference of what it would look like to execute the default script with the specified options. The customized script doesn’t need any options." aria-label="This command line just serves as a reference of what it would look like to execute the default script with the specified options. The customized script doesn’t need any options.">ℹ️</span></h3>
+            <p>
+              Option style: <label title="Like `-f DIR -ay`." aria-description="Single dash and single letter syntax; consecutive single letters are combined if possible."><input name="cliStyle" type="radio" value="compact" checked/> Compact</label> <label title="Like `-f DIR -a -y`." aria-description="Single dash and single letter syntax."><input name="cliStyle" type="radio" value="short"/> Short</label> <label title="Like `--firefox DIR --add-all-found --fix-only-youngest`." aria-description="Double dash and descriptive word syntax."><input name="cliStyle" type="radio" value="long"/> Long</label>
+            </p>
+            <pre data-lang="Bash" aria-description="Shell command" aria-live="polite"><code id="commandLine"><span class="shStart" aria-hidden="true"></span><span class="fn">./fixfx.sh</span></code></pre>
+          </section>
+        </div>
+      </fieldset>
+    </div>
+  </form>
+</body>
+</html>
