@@ -14,10 +14,10 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 91.0a1 (2020-07-01) through 105.0a1 (2022-07-29) (64-bit)
+* Firefox Nightly 91 (2020-07-01) through 105 (2022-08-14) (64-bit)
 * Firefox ESR 78 through 102 (64-bit)
-* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.18.14.arch1-1`)
-* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:42.3-1`)
+* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `5.18.16.arch1-1`)
+* Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:42.4-1`)
 * Bash 4.x+
 * Info-ZIP UnZip ([`extra/unzip`][unzip] `6.0-14` through `6.0-18`)
 * Info-ZIP Zip ([`extra/zip`][zip] `3.0-9` through `3.0-10`)
@@ -55,8 +55,11 @@ Also see [my Super User answer][super-user] for detailed steps.
    Interactive execution is recommended.
 6. The script should find your Firefox install path(s) automatically.
    If multiple viable paths are found, you can select the ones you want to fix.
-   If no paths are found, you can <!-- either --> call the script with the [`--firefox` option](#options-in-detail), specifying the Firefox install paths.
-   <!--, or * use the Web interface (WIP) to download a version of the script with the paths specified in the presets -->
+   If no paths are found, you can either
+   
+   * call the script with the [`--firefox` option](#options-in-detail), specifying the Firefox install paths, or
+   * use the [web app] to download a version of the script with the paths specified in the presets.
+   
    The correct paths contain an `omni.ja` file, as well as a `browser` directory with another `omni.ja` file in it.
 7. The script checks if you have write access to all relevant directories: the Firefox install paths, the backup path, and `/tmp`, where the unzipping happens.
    If not, you’ll be asked to enter your root password.
