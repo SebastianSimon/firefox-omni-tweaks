@@ -1,3 +1,6 @@
+*{
+  box-sizing: border-box;
+}
 :root{
   --block-border-radius: 0.6em;
   --code-background-color: #141312;
@@ -13,7 +16,6 @@
   --result-hover-background-color: #403565;
   --results-background-color: #281d4e;
   --results-border-color: #3a3372;
-  box-sizing: border-box;
   font-family: system-ui;
   font-size: 15px;
   padding: 0 8px;
@@ -120,7 +122,7 @@ pre > code{
   background: var(--code-background-color);
   color: var(--code-foreground-color);
   display: block;
-  overflow-x: auto;
+  overflow-x: scroll;
   padding: 1em;
 }
 pre > code > .fn{
