@@ -234,7 +234,7 @@ pre .shStart::before{
     gap: 0;
     grid: auto / 100%;
   }
-  .results{
+  .resultsBox{
     position: static;
   }
 }
