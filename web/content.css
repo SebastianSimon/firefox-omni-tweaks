@@ -179,11 +179,6 @@ pre .shStart::before{
 }
 .inlineFlowRootLink{
   display: inline flow-root;
-  opacity: 0.8;
-  transition: all 100ms;
-}
-.inlineFlowRootLink:hover{
-  opacity: 1;
 }
 .setting input{
   box-shadow: 0 0 0 2px #ffffffff;
