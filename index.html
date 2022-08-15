@@ -159,7 +159,8 @@
             <p>What next? Follow the steps in the <a href="https://github.com/SebastianSimon/firefox-omni-tweaks#using-the-web-app">Documentation</a>.</p>
           </section>
           <section class="commandLineSection">
-            <h3>Equivalent command line <span class="info" title="This command line just serves as a reference of what it would look like to execute the default script with the specified options. The customized script doesn’t need any options." aria-label="This command line just serves as a reference of what it would look like to execute the default script with the specified options. The customized script doesn’t need any options.">ℹ️</span></h3>
+            <h3><span>Equivalent command line</span> <input class="info" type="button" value="ℹ️" title="This command line just serves as a reference of what it would look like to execute the default script with the specified options. The customized script doesn’t need any options." aria-labelledby="commandLineInfo"></h3>
+            <p id="commandLineInfo" hidden>This command line just serves as a reference of what it would look like to execute the default script with the specified options. The customized script doesn’t need any options.</p>
             <p>
               Option style: <label title="Like `-f DIR -ay`." aria-description="Single dash and single letter syntax; consecutive single letters are combined if possible."><input name="cliStyle" type="radio" value="compact" checked/> Compact</label> <label title="Like `-f DIR -a -y`." aria-description="Single dash and single letter syntax."><input name="cliStyle" type="radio" value="short"/> Short</label> <label title="Like `--firefox DIR --add-all-found --fix-only-youngest`." aria-description="Double dash and descriptive word syntax."><input name="cliStyle" type="radio" value="long"/> Long</label>
             </p>

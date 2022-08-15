@@ -60,6 +60,11 @@ h1{
   letter-spacing: 0.06rem;
   margin: 2rem 0 0;
 }
+h3{
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+}
 hr{
   border: none;
   border-top: 1px solid #f4ebf5d1;
@@ -165,8 +170,12 @@ pre .shStart::before{
   vertical-align: -0.41em;
 }
 .info{
-  float: right;
-  cursor: default;
+  background: none;
+  border: none;
+  color: #f4ebf5ff;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
 }
 .inlineFlowRootLink{
   display: inline flow-root;

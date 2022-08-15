@@ -328,6 +328,13 @@ const getSetting = (setting) => {
       updateCommandLine();
     }
   },
+  toggleInfo = ({ target }) => {
+    const infoButton = target.closest(".info");
+    
+    if(infoButton){
+      document.getElementById(infoButton.getAttribute("aria-labelledby")).toggleAttribute("hidden");
+    }
+  },
   byEntryKeys = ([ a ], [ b ]) => a.localeCompare(b),
   entriesToAssociativeArray = (nesting) => ([ key, value ]) => `${nesting}[${key}]=${shell.quotePrefix(value)}'${shell.escape(value)}'`,
   generatePresets = (nesting) => Array.from(presetEntries)
@@ -510,6 +517,7 @@ addEventListener("input", update);
 addEventListener("click", (...args) => {
   manageDynamicSettings(...args);
   changeCLIStyle(...args);
+  toggleInfo(...args);
 });
 document.getElementById("downloadLink").addEventListener("click", getCustomScriptSource);
 setDefaultValues();
