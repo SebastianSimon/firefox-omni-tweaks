@@ -391,7 +391,7 @@ collect_specified(){
   done
 }
 
-collect_all(){
+collect_found(){
   local found_firefox_dir
   local found_firefox_dirs
 
@@ -408,7 +408,7 @@ collect_all(){
 
 collect_firefox_dirs(){
   collect_specified
-  collect_all
+  collect_found
 }
 
 filter_only_youngest(){
