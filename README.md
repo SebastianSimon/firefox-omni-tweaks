@@ -49,8 +49,8 @@ Also see [my Super User answer][super-user] for detailed steps.
 
 5. Execute the script.
    
-   * Interactively: Either click it in your file manager, then click the “Run in terminal” button, or run it directly as e.g. `bash ./fixfx.sh`.
-   * Non-interactively: Click it in your file manager, then click the “Run” button.
+   * Interactively: Either click it in your file manager, then click the <kbd>Run in terminal</kbd> button, or run it directly as e.g. `bash ./fixfx.sh`.
+   * Non-interactively: Click it in your file manager, then click the <kbd>Run</kbd> button (i.e. running in background; no terminal shown).
    
    Interactive execution is recommended.
 6. The script should find your Firefox install path(s) automatically.
