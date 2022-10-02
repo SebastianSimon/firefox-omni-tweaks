@@ -30,6 +30,10 @@ const getSetting = (setting) => {
             throw new Error(`Setting with preset key '${getSetting(setting).asPresetKey()}' has no default value, but has 'defaultIfEmpty' type.`);
           }
           
+          if(!type.has("composite") && stringElement.value.startsWith("-")){
+            return `./${stringElement.value}`;
+          }
+          
           return stringElement.value;
         }
         
@@ -54,6 +58,10 @@ const getSetting = (setting) => {
         if(stringElement){
           if(prefix){
             prefix += "=";
+          }
+          
+          if(!type.has("composite") && stringElement.value.startsWith("-")){
+            prefix += "./";
           }
           
           return `${prefix}${stringElement.value}`;
