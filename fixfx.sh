@@ -35,6 +35,7 @@ declare -A settings=(
   [options|preventClickSelectsAll]='on'
   [options|secondsSeekedByKeyboard]=''
   [options|tabSwitchCopiesToClipboard]=''
+  [options|preventChangingSearchEnginesByScrolling]=''
   [quiet]=''
   # End presets.
 )
@@ -143,7 +144,7 @@ fix_option_default_value(){
   local -r fix_key="${1}"
   
   case "${fix_key}" in
-    'autoCompleteCopiesToClipboard' | 'autoSelectCopiesToClipboard' | 'clearSearchBarOnSubmit' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
+    'autoCompleteCopiesToClipboard' | 'autoSelectCopiesToClipboard' | 'clearSearchBarOnSubmit' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard' | 'preventChaningSearchEnginesByScrolling')
       echo 'on'
       ;;
     *)
@@ -223,6 +224,11 @@ FIX_OPTION_KEYs:
                              Requires autoSelectCopiesToClipboard. Also copies
                                selection to clipboard when switching tabs;
                                ${settings[options|autoCompleteCopiesToClipboard]:-off} by default.
+  
+  preventChangingSearchEnginesByScrolling
+                             Scrolling with Control held or zooming on the
+                               search bar no longer changes search engines;
+                               ${settings[options|preventChangingSearchEnginesByScrolling]:-off} by default.
 
 Examples:
   # Fix all Firefox installations that are automatically found, then
@@ -734,6 +740,10 @@ edit_and_lock_based_on_options(){
   if [[ "${settings[options|secondsSeekedByKeyboard]-}" ]]; then
     edit_file 'secondsSeekedByKeyboard' 'omni' 'chrome/toolkit/content/global/elements/videocontrols.js' "s/(newval = oldval [+-] |static SEEK_TIME_SECS = )[0-9]+;/\1${settings[options|secondsSeekedByKeyboard]-};/"
     edit_file 'secondsSeekedByKeyboard' 'omni' 'actors/PictureInPictureChild.jsm' "s/(newval = oldval [+-] |const SEEK_TIME_SECS = )[0-9]+;/\1${settings[options|secondsSeekedByKeyboard]-};/"
+  fi
+
+  if [[ "${settings[options|preventChangingSearchEnginesByScrolling]-}" ]]; then
+    edit_file 'preventChangingSearchEnginesByScrolling' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' '/this\.addEventListener\(/,/"DOMMouseScroll"/ s/this\.addEventListener//'
   fi
 }
 
