@@ -746,18 +746,27 @@ edit_and_lock_based_on_options(){
   fi
 
   if [[ "${settings[options|viewImageInCurrentTab]-}" ]]; then
-    # first edit the JS responsible
-    edit_file 'viewImageInCurrentTab' 'browser_omni' 'chrome/browser/content/browser/nsContextMenu.sys.mjs' 's!where = "tab";!// where = "tab";!'
+    local OLDWD="$(pwd)"
+    # first edit the JS responsible (after checking for correct filename)
+    local viewimageintab_path='chrome/browser/content/browser/nsContextMenu.sys.mjs'
+    
+    if [[ ! -f "${unpack_dirs['browser_omni']}"'/'"${viewimageintab_path}" ]]; then
+      viewimageintab_path='chrome/browser/content/browser/nsContextMenu.js'
+    fi
+    
+    edit_file 'viewImageInCurrentTab' 'browser_omni' "${viewimageintab_path}" 's!where = "tab";!// where = "tab";!'
+
     # gotta hit any possible locales, but this script has no provisions for
     # other languages. So this will hit en-GB and en-US (among others)
     # correctly and should not break non-english locales.
     echo 'Note: if your locale is not English, this will fail to relabel the "open image'
     echo 'in new tab" button, but it will still function properly. Patches welcome.'
+
     # doing working directory juggling to get the 'for' loop to give the
     # appropriate names for the edit_file function.
     # see firefox-l10n repository history for other locales' labels
-    OLDWD="$(pwd)"
     pushd "${unpack_dirs['browser_omni']}"'/localization' > /dev/null
+
     # only process english locales for now, but please add your own for loop(s) for your locale(s)
     for file in en-*; do
       # not sure working directory matters but trying to tamper with this
@@ -766,6 +775,7 @@ edit_and_lock_based_on_options(){
       edit_file 'viewImageInCurrentTab' 'browser_omni' 'localization/'"$file"'/browser/browserContext.ftl' 's/\.label = Open Image in New Tab/\.label = View Image/;s/\.label = Open Video in New Tab/\.label = View Video/'
     done
     popd > /dev/null
+
   fi
 
 }
