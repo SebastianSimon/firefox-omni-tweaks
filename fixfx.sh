@@ -687,15 +687,22 @@ edit_file(){
 
 edit_and_lock_based_on_options(){
   local urlbarinput_path='modules/UrlbarInput.sys.mjs'
+  local urlbarinput_key='browser_omni'
   
-  if [[ ! -f "${unpack_dirs['browser_omni']}/${urlbarinput_path}" ]]; then
+  if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
     urlbarinput_path='modules/UrlbarInput.jsm'
   fi
   
+  if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
+    urlbarinput_path='moz-src/browser/components/urlbar/UrlbarInput.sys.mjs'
+    urlbarinput_key='omni'
+  fi
+  
   readonly urlbarinput_path
+  readonly urlbarinput_key
   
   if [[ "${settings[options|preventClickSelectsAll]-}" ]]; then
-    edit_file 'preventClickSelectsAll' 'browser_omni' "${urlbarinput_path}" 's/(this\._preventClickSelectsAll = )this\.focused;/\1true;/'
+    edit_file 'preventClickSelectsAll' "${urlbarinput_key}" "${urlbarinput_path}" 's/(this\._preventClickSelectsAll = )this\.focused;/\1true;/'
     edit_file 'preventClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/(this\._preventClickSelectsAll = )this\._textbox\.focused;/\1true;/'
   fi
   
@@ -704,12 +711,12 @@ edit_and_lock_based_on_options(){
   fi
   
   if [[ "${settings[options|doubleClickSelectsAll]-}" ]]; then
-    edit_file 'doubleClickSelectsAll' 'browser_omni' "${urlbarinput_path}" 's/(if \(event\.target\.id == SEARCH_BUTTON_ID\) \{)/if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        } else \1/'
+    edit_file 'doubleClickSelectsAll' "${urlbarinput_key}" "${urlbarinput_path}" 's/(if \(event\.target\.id == SEARCH_BUTTON_ID\) \{)/if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        } else \1/'
     edit_file 'doubleClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' '/this\.addEventListener\("mousedown", event => \{/,/\}\);/ s/(\}\);)/        \n        if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        }\n      \1/'
   fi
   
   if [[ "${settings[options|autoSelectCopiesToClipboard]-}" ]]; then
-    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' "${urlbarinput_path}" 's/(_on_select\(event\) \{)/\1\n    this.window.fixfx_isOpeningLocation = false;\n    /' \
+    edit_file 'autoSelectCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/(_on_select\(event\) \{)/\1\n    this.window.fixfx_isOpeningLocation = false;\n    /' \
       's/(this\._suppressPrimaryAdjustment = )true;/\1false;/' \
       's/(this\.inputField\.select\(\);)/\1\n    \n    if(this.window.fixfx_isOpeningLocation){\n      this._on_select({\n        detail: {\n          fixfx_openingLocationCall: true\n        }\n      });\n    }\n    /'
     edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/browser.js' '/function openLocation/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isOpeningLocation = true;\n    \1/' \
@@ -720,14 +727,14 @@ edit_and_lock_based_on_options(){
       's/(_setupTextboxEventListeners\(\) \{)/\1\n      this.textbox.addEventListener("select", () => {\n        window.fixfx_isOpeningSearch = false;\n        \n        if(this.value \&\& Services.clipboard.supportsSelectionClipboard()){\n          ClipboardHelper.copyStringToClipboard(this.value, Services.clipboard.kSelectionClipboard);\n        }\n      });\n      /'
     
     if [[ "${settings[options|tabSwitchCopiesToClipboard]-}" ]]; then
-      edit_file 'tabSwitchCopiesToClipboard' 'browser_omni' "${urlbarinput_path}" 's/^\s*!this\.window\.windowUtils\.isHandlingUserInput \|\|$//'
+      edit_file 'tabSwitchCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/^\s*!this\.window\.windowUtils\.isHandlingUserInput \|\|$//'
     else
-      edit_file 'tabSwitchCopiesToClipboard' 'browser_omni' "${urlbarinput_path}" 's/(_on_select\(event\) \{)/\1\n    if(event?.detail?.fixfx_openingLocationCall){\n      this.window.fixfx_isSwitchingTab = false;\n    }\n    \n    const fixfx_isSwitchingTab = this.window.fixfx_isSwitchingTab;\n    \n    if(this.window.fixfx_isSwitchingTab){\n      this.window.setTimeout(() => this.window.setTimeout(() => this.window.fixfx_isSwitchingTab = false));\n    }\n    /' \
+      edit_file 'tabSwitchCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/(_on_select\(event\) \{)/\1\n    if(event?.detail?.fixfx_openingLocationCall){\n      this.window.fixfx_isSwitchingTab = false;\n    }\n    \n    const fixfx_isSwitchingTab = this.window.fixfx_isSwitchingTab;\n    \n    if(this.window.fixfx_isSwitchingTab){\n      this.window.setTimeout(() => this.window.setTimeout(() => this.window.fixfx_isSwitchingTab = false));\n    }\n    /' \
         's/!this\.window\.windowUtils\.isHandlingUserInput \|\|/fixfx_isSwitchingTab ||/'
     fi
     
     if [[ ! "${settings[options|autoCompleteCopiesToClipboard]-}" ]]; then
-      edit_file 'autoCompleteCopiesToClipboard' 'browser_omni' "${urlbarinput_path}" '/_on_select\(event\) \{/,/ClipboardHelper/ s/(if \(!val)\)/\1 || !this.window.windowUtils.isHandlingUserInput \&\& val !== this.inputField.value \&\& this.inputField.value.endsWith(val))/'
+      edit_file 'autoCompleteCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" '/_on_select\(event\) \{/,/ClipboardHelper/ s/(if \(!val)\)/\1 || !this.window.windowUtils.isHandlingUserInput \&\& val !== this.inputField.value \&\& this.inputField.value.endsWith(val))/'
     fi
   fi
   
