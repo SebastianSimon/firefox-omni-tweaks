@@ -595,7 +595,7 @@ initialize_backup_target(){
   local incremental_number='0'
   
   if [[ ! -e "${settings[backupDir]}" && -d "$(dirname -- "${settings[backupDir]}")" ]]; then
-    mkdir "${settings[backupDir]}"
+    mkdir -- "${settings[backupDir]}"
   fi
   
   find_backup_dir 1>'/dev/null' || return "${?}"
@@ -686,27 +686,27 @@ edit_file(){
 }
 
 edit_and_lock_based_on_options(){
-  local urlbarinput_path='modules/UrlbarInput.sys.mjs'
-  local urlbarinput_key='browser_omni'
-  
-  if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
-    urlbarinput_path='modules/UrlbarInput.jsm'
-  fi
-  
-  if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
-    urlbarinput_path='moz-src/browser/components/urlbar/UrlbarInput.sys.mjs'
-    urlbarinput_key='omni'
-  fi
-
-  if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
-    urlbarinput_path='chrome/browser/content/browser/urlbar/UrlbarInput.mjs'
-    urlbarinput_key='browser_omni'
-  fi
-
-  readonly urlbarinput_path
-  readonly urlbarinput_key
-  
   if [[ "${settings[options|preventClickSelectsAll]-}" ]]; then
+    local urlbarinput_path='modules/UrlbarInput.sys.mjs'
+    local urlbarinput_key='browser_omni'
+
+    if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
+      urlbarinput_path='modules/UrlbarInput.jsm'
+    fi
+
+    if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
+      urlbarinput_path='moz-src/browser/components/urlbar/UrlbarInput.sys.mjs'
+      urlbarinput_key='omni'
+    fi
+
+    if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
+      urlbarinput_path='chrome/browser/content/browser/urlbar/UrlbarInput.mjs'
+      urlbarinput_key='browser_omni'
+    fi
+
+    readonly urlbarinput_path
+    readonly urlbarinput_key
+
     edit_file 'preventClickSelectsAll' "${urlbarinput_key}" "${urlbarinput_path}" 's/(this\._preventClickSelectsAll = )this\.focused;/\1true;/'
     edit_file 'preventClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/(this\._preventClickSelectsAll = )this\._textbox\.focused;/\1true;/'
   fi
@@ -721,12 +721,20 @@ edit_and_lock_based_on_options(){
   fi
   
   if [[ "${settings[options|autoSelectCopiesToClipboard]-}" ]]; then
+    local tabbrowser_path='chrome/browser/content/browser/tabbrowser.js'
+
+    if [[ ! -f "omni/${tabbrowser_path}" ]]; then
+      tabbrowser_path='chrome/browser/content/browser/tabbrowser/tabbrowser.js'
+    fi
+
+    readonly tabbrowser_path
+
     edit_file 'autoSelectCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/(_on_select\(event\) \{)/\1\n    this.window.fixfx_isOpeningLocation = false;\n    /' \
       's/(this\._suppressPrimaryAdjustment = )true;/\1false;/' \
       's/(this\.inputField\.select\(\);)/\1\n    \n    if(this.window.fixfx_isOpeningLocation){\n      this._on_select({\n        detail: {\n          fixfx_openingLocationCall: true\n        }\n      });\n    }\n    /'
     edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/browser.js' '/function openLocation/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isOpeningLocation = true;\n    \1/' \
       's/^(\s*searchBar\.select\(\);)$/      window.fixfx_isOpeningSearch = true;\n\1/'
-    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/tabbrowser.js' '/_adjustFocusAfterTabSwitch\(newTab\) \{/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isSwitchingTab = true;\n          \1/'
+    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' "${tabbrowser_path}" '/_adjustFocusAfterTabSwitch\(newTab\) \{/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isSwitchingTab = true;\n          \1/'
     edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/^\{$/{\n  XPCOMUtils.defineLazyServiceGetter(this, "ClipboardHelper", "@mozilla.org\/widget\/clipboardhelper;1", "nsIClipboardHelper");\n  /' \
       's/(this\._textbox\.select\(\);)/\1\n      \n      if(window.fixfx_isOpeningSearch){\n        this.textbox.dispatchEvent(new Event("select"));\n      }/' \
       's/(_setupTextboxEventListeners\(\) \{)/\1\n      this.textbox.addEventListener("select", () => {\n        window.fixfx_isOpeningSearch = false;\n        \n        if(this.value \&\& Services.clipboard.supportsSelectionClipboard()){\n          ClipboardHelper.copyStringToClipboard(this.value, Services.clipboard.kSelectionClipboard);\n        }\n      });\n      /'
@@ -744,8 +752,16 @@ edit_and_lock_based_on_options(){
   fi
   
   if [[ "${settings[options|secondsSeekedByKeyboard]-}" ]]; then
+    local picture_in_picture_child_path='actors/PictureInPictureChild.jsm'
+
+    if [[ ! -f "omni/${picture_in_picture_child_path}" ]]; then
+      picture_in_picture_child_path='actors/PictureInPictureChild.sys.mjs'
+    fi
+
+    readonly picture_in_picture_child_path
+
     edit_file 'secondsSeekedByKeyboard' 'omni' 'chrome/toolkit/content/global/elements/videocontrols.js' "s/(newval = oldval [+-] |static SEEK_TIME_SECS = )[0-9]+;/\1${settings[options|secondsSeekedByKeyboard]-};/"
-    edit_file 'secondsSeekedByKeyboard' 'omni' 'actors/PictureInPictureChild.jsm' "s/(newval = oldval [+-] |const SEEK_TIME_SECS = )[0-9]+;/\1${settings[options|secondsSeekedByKeyboard]-};/"
+    edit_file 'secondsSeekedByKeyboard' 'omni' "${picture_in_picture_child_path}" "s/(newval = oldval [+-] |const SEEK_TIME_SECS = )[0-9]+;/\1${settings[options|secondsSeekedByKeyboard]-};/"
   fi
 }
 
