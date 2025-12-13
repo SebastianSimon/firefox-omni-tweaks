@@ -66,7 +66,7 @@ leave_terminal_window_open(){
   local executed_via_file_dialog=''
   local executed_in_terminal_window=''
   
-  if [[ "$(readlink --canonicalize -- "/proc/$(ps -o 'ppid:1=' --pid "${$}")/exe")" != "$(readlink --canonicalize -- "${SHELL}")" ]]; then
+  if [[ "$(readlink --canonicalize -- "/proc/$(ps -o 'ppid:1=' --pid "${$}")/exe")" != "$(readlink --canonicalize -- '/bin/bash')" ]]; then
     executed_via_file_dialog='true'
   fi
   
@@ -89,7 +89,7 @@ terminate(){
   cleanup
   
   if leave_terminal_window_open; then
-    exec 'bash'
+    exec "${SHELL}"
   fi
   
   exit "${status}"
