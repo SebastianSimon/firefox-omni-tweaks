@@ -716,7 +716,7 @@ edit_and_lock_based_on_options(){
   fi
   
   if [[ "${settings[options|doubleClickSelectsAll]-}" ]]; then
-    edit_file 'doubleClickSelectsAll' "${urlbarinput_key}" "${urlbarinput_path}" 's/(if \(event\.target\.id == SEARCH_BUTTON_ID\) \{)/if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        } else \1/'
+    edit_file 'doubleClickSelectsAll' "${urlbarinput_key}" "${urlbarinput_path}" 's/(if \(event\.target\.id == SEARCH_BUTTON_ID\) \{)/if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        } else \1/;s/(case this\._inputContainer:)/\1\n        if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        }\n/'
     edit_file 'doubleClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' '/this\.addEventListener\("mousedown", event => \{/,/\}\);/ s/(\}\);)/        \n        if (event.detail === 2) {\n          this.select();\n          event.preventDefault();\n        }\n      \1/'
   fi
   
