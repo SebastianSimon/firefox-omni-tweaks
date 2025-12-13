@@ -26,7 +26,7 @@ test_all_options_produce_no_warnings(){
   ./fixfx.sh --firefox "${test_dir}" --option 'autoCompleteCopiesToClipboard' --option 'autoSelectCopiesToClipboard' --option 'clearSearchBarOnSubmit' --option 'doubleClickSelectsAll' --option 'preventClickSelectsAll' --option 'secondsSeekedByKeyboard=10' --option 'tabSwitchCopiesToClipboard' --quiet 2>"${test_dir}.stderr"
 
   if [[ -n "$(cat "${test_dir}.stderr")" ]]; then
-    print_failed "${test_name}"
+    print_failed "“${test_name}”; warnings produced:"
     cat "${test_dir}.stderr"
 
     return '1'
@@ -45,7 +45,7 @@ test_all_options_except_tab_switch_copies_to_clipboard_produce_no_warnings(){
   ./fixfx.sh --firefox "${test_dir}" --option 'autoCompleteCopiesToClipboard' --option 'autoSelectCopiesToClipboard' --option 'clearSearchBarOnSubmit' --option 'doubleClickSelectsAll' --option 'preventClickSelectsAll' --option 'secondsSeekedByKeyboard=10' --option 'tabSwitchCopiesToClipboard=' --quiet 2>"${test_dir}.stderr"
 
   if [[ -n "$(cat "${test_dir}.stderr")" ]]; then
-    print_failed "${test_name}"
+    print_failed "“${test_name}”; warnings produced:"
     cat "${test_dir}.stderr"
 
     return '1'

@@ -675,7 +675,7 @@ edit_file(){
 
   while (("${match_index}" < "${regex_index}")); do
     if [[ ! -s "${fixed_flag_file}.${match_index}" ]]; then
-      echo "${formatting[yellow]}Warning: Pattern '${*:match_index:1}' could not be matched in file ${input_file@Q}.${formatting[reset]}" >&2
+      echo "${formatting[yellow]}Warning: Pattern '${*:match_index:1}' could not be matched in file ${input_file@Q} (${package_key@Q}).${formatting[reset]}" >&2
       
       break
     fi
