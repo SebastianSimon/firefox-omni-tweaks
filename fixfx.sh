@@ -729,11 +729,22 @@ edit_and_lock_based_on_options(){
 
     readonly tabbrowser_path
 
+    local search_ui_utils_path='chrome/browser/content/browser/browser.js'
+    local search_ui_utils_key='browser_omni'
+
+    if ! grep --quiet 'searchBar\.select' -- "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}"; then
+      search_ui_utils_path='moz-src/browser/components/search/SearchUIUtils.sys.mjs'
+      search_ui_utils_key='omni'
+    fi
+
+    readonly search_ui_utils_path
+    readonly search_ui_utils_key
+
     edit_file 'autoSelectCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/(_on_select\(event\) \{)/\1\n    this.window.fixfx_isOpeningLocation = false;\n    /' \
       's/(this\._suppressPrimaryAdjustment = )true;/\1false;/' \
       's/(this\.inputField\.select\(\);)/\1\n    \n    if(this.window.fixfx_isOpeningLocation){\n      this._on_select({\n        detail: {\n          fixfx_openingLocationCall: true\n        }\n      });\n    }\n    /'
-    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/browser.js' '/function openLocation/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isOpeningLocation = true;\n    \1/' \
-      's/^(\s*searchBar\.select\(\);)$/      window.fixfx_isOpeningSearch = true;\n\1/'
+    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/browser.js' '/function openLocation/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isOpeningLocation = true;\n    \1/'
+    edit_file 'autoSelectCopiesToClipboard' "${search_ui_utils_key}" "${search_ui_utils_path}" 's/^(\s*searchBar\.select\(\);)$/      window.fixfx_isOpeningSearch = true;\n\1/'
     edit_file 'autoSelectCopiesToClipboard' 'browser_omni' "${tabbrowser_path}" '/_adjustFocusAfterTabSwitch\(newTab\) \{/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isSwitchingTab = true;\n          \1/'
     edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/^\{$/{\n  XPCOMUtils.defineLazyServiceGetter(this, "ClipboardHelper", "@mozilla.org\/widget\/clipboardhelper;1", "nsIClipboardHelper");\n  /' \
       's/(this\._textbox\.select\(\);)/\1\n      \n      if(window.fixfx_isOpeningSearch){\n        this.textbox.dispatchEvent(new Event("select"));\n      }/' \
