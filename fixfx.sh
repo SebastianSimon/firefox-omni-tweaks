@@ -740,8 +740,8 @@ edit_and_lock_based_on_options(){
     readonly search_ui_utils_path
     readonly search_ui_utils_key
 
-    edit_file 'autoSelectCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/(_on_select\(event\) \{)/\1\n    this.window.fixfx_isOpeningLocation = false;\n    /' \
-      's/(this\._suppressPrimaryAdjustment = )true;/\1false;/' \
+    edit_file 'autoSelectCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/(_on_select\()(event)?(\) \{)/\1event\3\n    this.window.fixfx_isOpeningLocation = false;\n    /' \
+      '/^  select\(\) \{/,/^  \}/ s/(this\._suppressPrimaryAdjustment = )true;/\1false;/' \
       's/(this\.inputField\.select\(\);)/\1\n    \n    if(this.window.fixfx_isOpeningLocation){\n      this._on_select({\n        detail: {\n          fixfx_openingLocationCall: true\n        }\n      });\n    }\n    /'
     edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/browser.js' '/function openLocation/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isOpeningLocation = true;\n    \1/'
     edit_file 'autoSelectCopiesToClipboard' "${search_ui_utils_key}" "${search_ui_utils_path}" 's/^(\s*searchBar\.select\(\);)$/      window.fixfx_isOpeningSearch = true;\n\1/'
@@ -753,12 +753,12 @@ edit_and_lock_based_on_options(){
     if [[ "${settings[options|tabSwitchCopiesToClipboard]-}" ]]; then
       edit_file 'tabSwitchCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/^\s*!this\.window\.windowUtils\.isHandlingUserInput \|\|$//'
     else
-      edit_file 'tabSwitchCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/(_on_select\(event\) \{)/\1\n    if(event?.detail?.fixfx_openingLocationCall){\n      this.window.fixfx_isSwitchingTab = false;\n    }\n    \n    const fixfx_isSwitchingTab = this.window.fixfx_isSwitchingTab;\n    \n    if(this.window.fixfx_isSwitchingTab){\n      this.window.setTimeout(() => this.window.setTimeout(() => this.window.fixfx_isSwitchingTab = false));\n    }\n    /' \
+      edit_file 'tabSwitchCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/(_on_select\()(event)?(\) \{)/\1event\3\n    if(event?.detail?.fixfx_openingLocationCall){\n      this.window.fixfx_isSwitchingTab = false;\n    }\n    \n    const fixfx_isSwitchingTab = this.window.fixfx_isSwitchingTab;\n    \n    if(this.window.fixfx_isSwitchingTab){\n      this.window.setTimeout(() => this.window.setTimeout(() => this.window.fixfx_isSwitchingTab = false));\n    }\n    /' \
         's/!this\.window\.windowUtils\.isHandlingUserInput \|\|/fixfx_isSwitchingTab ||/'
     fi
     
     if [[ ! "${settings[options|autoCompleteCopiesToClipboard]-}" ]]; then
-      edit_file 'autoCompleteCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" '/_on_select\(event\) \{/,/ClipboardHelper/ s/(if \(!val)\)/\1 || !this.window.windowUtils.isHandlingUserInput \&\& val !== this.inputField.value \&\& this.inputField.value.endsWith(val))/'
+      edit_file 'autoCompleteCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" '/_on_select\((event)?\) \{/,/ClipboardHelper/ s/(if \(!val)\)/\1 || !this.window.windowUtils.isHandlingUserInput \&\& val !== this.inputField.value \&\& this.inputField.value.endsWith(val))/'
     fi
   fi
   
