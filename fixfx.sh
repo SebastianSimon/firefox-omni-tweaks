@@ -694,33 +694,37 @@ edit_file(){
 }
 
 edit_and_lock_based_on_options(){
+  local urlbarinput_path='modules/UrlbarInput.sys.mjs'
+  local urlbarinput_key='browser_omni'
+
+  if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
+    urlbarinput_path='modules/UrlbarInput.jsm'
+  fi
+
+  if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
+    urlbarinput_path='moz-src/browser/components/urlbar/UrlbarInput.sys.mjs'
+    urlbarinput_key='omni'
+  fi
+
+  if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
+    urlbarinput_path='chrome/browser/content/browser/urlbar/UrlbarInput.mjs'
+    urlbarinput_key='browser_omni'
+  fi
+
+  readonly urlbarinput_path
+  readonly urlbarinput_key
+
   if [[ "${settings[options|preventClickSelectsAll]-}" ]]; then
-    local urlbarinput_path='modules/UrlbarInput.sys.mjs'
-    local urlbarinput_key='browser_omni'
-
-    if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
-      urlbarinput_path='modules/UrlbarInput.jsm'
-    fi
-
-    if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
-      urlbarinput_path='moz-src/browser/components/urlbar/UrlbarInput.sys.mjs'
-      urlbarinput_key='omni'
-    fi
-
-    if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
-      urlbarinput_path='chrome/browser/content/browser/urlbar/UrlbarInput.mjs'
-      urlbarinput_key='browser_omni'
-    fi
-
-    readonly urlbarinput_path
-    readonly urlbarinput_key
-
     edit_file 'preventClickSelectsAll' "${urlbarinput_key}" "${urlbarinput_path}" 's/(this\._preventClickSelectsAll = )this\.focused;/\1true;/'
     edit_file 'preventClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/(this\._preventClickSelectsAll = )this\._textbox\.focused;/\1true;/'
   fi
   
   if [[ "${settings[options|clearSearchBarOnSubmit]-}" ]]; then
-    edit_file 'clearSearchBarOnSubmit' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' '/openTrustedLinkIn/s/$/textBox.value = "";/'
+    edit_file 'clearSearchBarOnSubmit' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' '/openTrustedLinkIn/ s/$/\n      textBox.value = "";/'
+
+    if grep --quiet '#isAddressbar' -- "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}"; then
+      edit_file 'clearSearchBarOnSubmit' "${urlbarinput_key}" "${urlbarinput_path}" '/this\.window\.openTrustedLinkIn\(/ s/(^\s+)(.*\);)$/\1\2\n\n\1if (!this.#isAddressbar) {\n\1  this.value = "";\n\1}/'
+    fi
   fi
   
   if [[ "${settings[options|doubleClickSelectsAll]-}" ]]; then
