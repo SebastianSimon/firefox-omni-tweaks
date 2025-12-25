@@ -62,20 +62,25 @@ cleanup(){
   fi
 }
 
-leave_terminal_window_open(){
-  local executed_via_file_dialog=''
-  local executed_in_terminal_window=''
-  
-  if [[ "$(readlink --canonicalize -- "/proc/$(ps -o 'ppid:1=' --pid "${$}")/exe")" != "$(readlink --canonicalize -- '/bin/bash')" ]]; then
-    executed_via_file_dialog='true'
+find_reason_to_avoid_shell_handoff(){
+  local -r parent_process="$(readlink --canonicalize -- "/proc/$(ps -o 'ppid:1=' --pid "${$}")/exe")"
+  local -r default_shell_executable="$(readlink --canonicalize -- "${SHELL}")"
+  local -r bash_executable="$(readlink --canonicalize -- '/bin/bash')"
+
+  if [[ "${parent_process}" == "${default_shell_executable}" || "${parent_process}" == "${bash_executable}" ]]; then
+    echo 'Parent process matches default shell or bash, so the program was likely not executed via an external terminal emulator (e.g. “Run in terminal” UI in file manager) and exiting returns to the shell.'
+
+    return
   fi
-  
-  if [[ "${COLORTERM-}" ]]; then
-    executed_in_terminal_window='true'
+
+  if [[ -z "${COLORTERM-}" ]]; then
+    echo 'Program was not executed in interactive terminal environment, but most likely in a background process which can be exited.'
+
+    return
   fi
-  
-  if [[ ! "${executed_via_file_dialog}" || ! "${executed_in_terminal_window}" ]] || [ "$(id --user)" -eq '0' ]; then
-    return '1'
+
+  if [ "$(id --user)" -eq '0' ]; then
+    echo 'Program was executed as root, so exiting would terminate sudo or the privilege-escalated re-executed process of this program, which is correct behavior.'
   fi
 }
 
@@ -87,8 +92,10 @@ terminate(){
   fi
   
   cleanup
-  
-  if leave_terminal_window_open; then
+
+  if [[ -z "$(find_reason_to_avoid_shell_handoff)" ]]; then
+    exec 1>&3
+    exec 3>&-
     exec "${SHELL}"
   fi
   
@@ -346,6 +353,7 @@ check_interactive(){
 apply_quiet(){
   if [[ "${settings[quiet]}" ]]; then
     needs_confirm_description_read=''
+    exec 3>&1
     exec 1>'/dev/null'
   fi
 }
