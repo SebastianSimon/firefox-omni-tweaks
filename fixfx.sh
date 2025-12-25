@@ -35,6 +35,7 @@ declare -A settings=(
   [options|preventClickSelectsAll]='on'
   [options|secondsSeekedByKeyboard]=''
   [options|tabSwitchCopiesToClipboard]=''
+  [options|viewImageInCurrentTab]=''
   [quiet]=''
   # End presets.
 )
@@ -143,7 +144,7 @@ fix_option_default_value(){
   local -r fix_key="${1}"
   
   case "${fix_key}" in
-    'autoCompleteCopiesToClipboard' | 'autoSelectCopiesToClipboard' | 'clearSearchBarOnSubmit' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard')
+    'autoCompleteCopiesToClipboard' | 'autoSelectCopiesToClipboard' | 'clearSearchBarOnSubmit' | 'doubleClickSelectsAll' | 'preventClickSelectsAll' | 'tabSwitchCopiesToClipboard' | 'viewImageInCurrentTab')
       echo 'on'
       ;;
     *)
@@ -223,6 +224,14 @@ FIX_OPTION_KEYs:
                              Requires autoSelectCopiesToClipboard. Also copies
                                selection to clipboard when switching tabs;
                                ${settings[options|autoCompleteCopiesToClipboard]:-off} by default.
+
+  viewImageInCurrentTab      Right clicking on an image (or video) shows an
+                               option \"view image\" or \"view video\" which
+                               opens the video or image in the current tab,
+                               unless middle clicked, or pressed with either
+                               ctrl or shift held down. The context menu label
+                               is currently only renamed for english locales,
+                               but the functionality works on all locales.
 
 Examples:
   # Fix all Firefox installations that are automatically found, then
@@ -538,7 +547,7 @@ get_options(){
     explicit_script_params+=('-f' "${filtered_firefox_dir}")
   done
   
-  for fix_option in 'autoCompleteCopiesToClipboard' 'autoSelectCopiesToClipboard' 'clearSearchBarOnSubmit' 'doubleClickSelectsAll' 'preventClickSelectsAll' 'secondsSeekedByKeyboard' 'tabSwitchCopiesToClipboard'; do
+  for fix_option in 'autoCompleteCopiesToClipboard' 'autoSelectCopiesToClipboard' 'clearSearchBarOnSubmit' 'doubleClickSelectsAll' 'preventClickSelectsAll' 'secondsSeekedByKeyboard' 'tabSwitchCopiesToClipboard' 'viewImageInCurrentTab'; do
     explicit_script_params+=('-o' "${fix_option}=${settings[options|${fix_option}]}")
   done
   
@@ -774,6 +783,40 @@ edit_and_lock_based_on_options(){
     edit_file 'secondsSeekedByKeyboard' 'omni' 'chrome/toolkit/content/global/elements/videocontrols.js' "s/(newval = oldval [+-] |static SEEK_TIME_SECS = )[0-9]+;/\1${settings[options|secondsSeekedByKeyboard]-};/"
     edit_file 'secondsSeekedByKeyboard' 'omni' "${picture_in_picture_child_path}" "s/(newval = oldval [+-] |const SEEK_TIME_SECS = )[0-9]+;/\1${settings[options|secondsSeekedByKeyboard]-};/"
   fi
+
+  if [[ "${settings[options|viewImageInCurrentTab]-}" ]]; then
+    local OLDWD="$(pwd)"
+    # first edit the JS responsible (after checking for correct filename)
+    local viewimageintab_path='chrome/browser/content/browser/nsContextMenu.sys.mjs'
+    
+    if [[ ! -f "${unpack_dirs['browser_omni']}"'/'"${viewimageintab_path}" ]]; then
+      viewimageintab_path='chrome/browser/content/browser/nsContextMenu.js'
+    fi
+    
+    edit_file 'viewImageInCurrentTab' 'browser_omni' "${viewimageintab_path}" 's!where = "tab";!// where = "tab";!'
+
+    # gotta hit any possible locales, but this script has no provisions for
+    # other languages. So this will hit en-GB and en-US (among others)
+    # correctly and should not break non-english locales.
+    echo 'Note: if your locale is not English, this will fail to relabel the "open image'
+    echo 'in new tab" button, but it will still function properly. Patches welcome.'
+
+    # doing working directory juggling to get the 'for' loop to give the
+    # appropriate names for the edit_file function.
+    # see firefox-l10n repository history for other locales' labels
+    pushd "${unpack_dirs['browser_omni']}"'/localization' > /dev/null
+
+    # only process english locales for now, but please add your own for loop(s) for your locale(s)
+    for file in en-*; do
+      # not sure working directory matters but trying to tamper with this
+      # script as little as possible
+      cd "$OLDWD"
+      edit_file 'viewImageInCurrentTab' 'browser_omni' 'localization/'"$file"'/browser/browserContext.ftl' 's/\.label = Open Image in New Tab/\.label = View Image/;s/\.label = Open Video in New Tab/\.label = View Video/'
+    done
+    popd > /dev/null
+
+  fi
+
 }
 
 prepare_backup_instructions(){
