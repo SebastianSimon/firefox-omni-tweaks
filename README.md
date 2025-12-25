@@ -108,7 +108,7 @@ The script should then run exactly as specified.
 You can make sure if the presets are set correctly: they’re in the `settings` array between `# Begin presets.` and `# End presets.`.
 
 You can theoretically still pass command line options to the script; these will get additionally applied.
-For example, if you specified a `firefoxDirs|0` in the web app, passing another `-f` directory will add it as `firefoxDirs|1`.
+For example, if you specified a `firefoxDirs:0` in the web app, passing another `-f` directory will add it as `firefoxDirs|1`.
 Opt-in options such as `-q`, `-a`, or `-y` cannot be disabled once they’ve been enabled.
 A `-b` or `-o` option is overridden by a later instance of the same option.
 

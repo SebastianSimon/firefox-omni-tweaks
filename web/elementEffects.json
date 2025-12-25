@@ -1,5 +1,5 @@
 {
-  "options|autoSelectCopiesToClipboard": {
+  "options:autoSelectCopiesToClipboard": {
     "default": [
       {
         "id": "tabSwitchCopiesToClipboard",
@@ -101,7 +101,7 @@
       }
     ]
   },
-  "options|clearSearchBarOnSubmit": {
+  "options:clearSearchBarOnSubmit": {
     "default": [
       {
         "id": "afterSubmittingSearch",
@@ -143,7 +143,7 @@
       }
     ]
   },
-  "options|doubleClickSelectsAll": {
+  "options:doubleClickSelectsAll": {
     "default": [
       {
         "id": "afterDoubleClick",
@@ -185,7 +185,7 @@
       }
     ]
   },
-  "options|preventClickSelectsAll": {
+  "options:preventClickSelectsAll": {
     "default": [
       {
         "id": "afterSingleClick",
@@ -227,7 +227,7 @@
       }
     ]
   },
-  "options|secondsSeekedByKeyboard": {
+  "options:secondsSeekedByKeyboard": {
     "default": [
       {
         "id": "afterSeekInBuiltInPlayer",

@@ -18,7 +18,7 @@ const getSetting = (setting) => {
           compositeKey.push(presetSubKey.dataset.presetSubKey);
         }
         
-        return compositeKey.join("|");
+        return compositeKey.join(":");
       },
       asPresetValue(){
         if(stringElement){
@@ -104,7 +104,7 @@ const getSetting = (setting) => {
     
     if(!isDefaultValue(document.getElementById("autoSelectCopiesToClipboard"))){
       moreElementEffects.push(...({
-        "options|autoCompleteCopiesToClipboard": {
+        "options:autoCompleteCopiesToClipboard": {
           default: [
             {
               id: "afterURLBarAutoComplete",
@@ -134,7 +134,7 @@ const getSetting = (setting) => {
             }
           ]
         },
-        "options|tabSwitchCopiesToClipboard": {
+        "options:tabSwitchCopiesToClipboard": {
           default: [
             {
               id: "afterTabSwitch",
@@ -170,7 +170,7 @@ const getSetting = (setting) => {
           : "otherwise"] ?? []));
     }
     
-    if(presetKey === "options|autoSelectCopiesToClipboard"){
+    if(presetKey === "options:autoSelectCopiesToClipboard"){
       update({
         target: document.getElementById("autoCompleteCopiesToClipboard")
       });
@@ -179,7 +179,7 @@ const getSetting = (setting) => {
       });
     }
     
-    if(presetKey === "options|secondsSeekedByKeyboard" && !isDefault){
+    if(presetKey === "options:secondsSeekedByKeyboard" && !isDefault){
       const seconds = Number(getSetting(setting).asPresetValue());
       
       moreElementEffects.push(...[
@@ -363,7 +363,7 @@ const getSetting = (setting) => {
     programmaticDownloadLink.click();
   },
   findSettingByPresetKey = (key) => {
-    const compositeKey = key.split("|");
+    const compositeKey = key.split(":");
     
     return Array.from(document.querySelectorAll(".setting"))
       .find((setting) => setting.closest(`[data-preset-key='${compositeKey[0]}']`) && (compositeKey.length <= 1 || setting.closest(`[data-preset-sub-key='${compositeKey[1]}']`)));
@@ -372,7 +372,7 @@ const getSetting = (setting) => {
     Array.from(presetEntries).forEach(([ key, value ]) => {
       const [
           presetKeyPart
-        ] = key.split("|"),
+        ] = key.split(":"),
         existingSetting = findSettingByPresetKey(key),
         addButton = document.querySelector(`[data-preset-key='${presetKeyPart}'] .addButton`);
       
