@@ -755,7 +755,7 @@ edit_and_lock_based_on_options(){
     edit_file 'autoSelectCopiesToClipboard' "${urlbarinput_key}" "${urlbarinput_path}" 's/(_on_select\()(event)?(\) \{)/\1event\3\n    this.window.fixfx_isOpeningLocation = false;\n    /' \
       '/^  select\(\) \{/,/^  \}/ s/(this\._suppressPrimaryAdjustment = )true;/\1false;/' \
       's/(this\.inputField\.select\(\);)/\1\n    \n    if(this.window.fixfx_isOpeningLocation){\n      this._on_select({\n        detail: {\n          fixfx_openingLocationCall: true\n        }\n      });\n    }\n    /'
-    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/browser.js' '/function openLocation/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isOpeningLocation = true;\n    \1/'
+    edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/browser.js' '/function openLocation/,/(gURLBar|focusTarget)\.select\(\);/ s/((gURLBar|focusTarget)\.select\(\);)/window.fixfx_isOpeningLocation = true;\n    \1/'
     edit_file 'autoSelectCopiesToClipboard' "${search_ui_utils_key}" "${search_ui_utils_path}" 's/^(\s*searchBar\.select\(\);)$/      window.fixfx_isOpeningSearch = true;\n\1/'
     edit_file 'autoSelectCopiesToClipboard' 'browser_omni' "${tabbrowser_path}" '/_adjustFocusAfterTabSwitch\(newTab\) \{/,/gURLBar\.select\(\);/ s/(gURLBar\.select\(\);)/window.fixfx_isSwitchingTab = true;\n          \1/'
     edit_file 'autoSelectCopiesToClipboard' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/^\{$/{\n  XPCOMUtils.defineLazyServiceGetter(this, "ClipboardHelper", "@mozilla.org\/widget\/clipboardhelper;1", "nsIClipboardHelper");\n  /' \
