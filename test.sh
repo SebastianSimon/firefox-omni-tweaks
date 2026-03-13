@@ -1,11 +1,16 @@
 #!/bin/bash
 
 readonly test_firefox_source="${1}"
+test_status='0'
+
+set_failed(){
+  test_status='1'
+}
 
 if [[ -z "${test_firefox_source}" ]]; then
   echo 'Usage: ./test.sh FIREFOX_DIR'
 
-  exit '1'
+  exit '2'
 fi
 
 print_failed(){
@@ -54,6 +59,8 @@ test_all_options_except_tab_switch_copies_to_clipboard_produce_no_warnings(){
   print_passed "${test_name}"
 }
 
-test_all_options_produce_no_warnings
-test_all_options_except_tab_switch_copies_to_clipboard_produce_no_warnings
+test_all_options_produce_no_warnings || set_failed
+test_all_options_except_tab_switch_copies_to_clipboard_produce_no_warnings || set_failed
 rm --recursive -- './test'
+
+exit "${test_status}"
