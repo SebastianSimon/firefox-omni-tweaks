@@ -715,8 +715,8 @@ edit_and_lock_based_on_options(){
   readonly urlbarinput_key
 
   if [[ "${settings[options:preventClickSelectsAll]-}" ]]; then
-    edit_file 'preventClickSelectsAll' "${urlbarinput_key}" "${urlbarinput_path}" 's/(this\._preventClickSelectsAll = )this\.focused;/\1true;/'
-    edit_file 'preventClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/(this\._preventClickSelectsAll = )this\._textbox\.focused;/\1true;/'
+    edit_file 'preventClickSelectsAll' "${urlbarinput_key}" "${urlbarinput_path}" 's/(this\.[_#]preventClickSelectsAll = )this\.focused;/\1true;/'
+    edit_file 'preventClickSelectsAll' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' 's/(this\.[_#]preventClickSelectsAll = )this\._textbox\.focused;/\1true;/'
   fi
 
   if [[ "${settings[options:clearSearchBarOnSubmit]-}" ]]; then

@@ -7,20 +7,20 @@ This also applies to Firefox ESR.
 
 The script works for _me_. 😉
 And _I’m_ running Firefox Nightly on Arch Linux.
-This is the software setup that I’ve _tested_ — it may work for other setups, too, and this script is likely to work with later versions as well:
+This is the software setup that I’ve _tested_—it may work for other setups, too, and this script is likely to work with later versions as well:
 
 <!--
 Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 91 (2020-07-01) through 150 (2026-03-10) (64-Bit)
+* Firefox Nightly 91 (2020-07-01) through 151 (2026-04-18) (64-Bit)
 * Firefox ESR 78 through 102 (64-bit)
-* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `6.19.6.arch1-1`)
+* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `6.19.11.arch1-1`)
 * Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:44.5-1`)
 * Bash 4.x+
 * Info-ZIP UnZip ([`extra/unzip`][unzip] `6.0-14` through `6.0-23`)
-* Info-ZIP Zip ([`extra/zip`][zip] `3.0-9` through `3.0-11`)
+* Info-ZIP Zip ([`extra/zip`][zip] `3.0-9` through `3.0-13`)
 
 _Note: the versions will only be updated for substantial changes to the script._
 
@@ -212,7 +212,7 @@ The script will only process the filtered set of Firefox paths.
 | Option flag                                 | Default | Description |
 |---------------------------------------------|:-------:|-------------|
 | `--option autoCompleteCopiesToClipboard`    |   Off   | This option requires `autoSelectCopiesToClipboard` to be set and is ignored without it. This option additionally enables copying selection in the URL bar triggered by typing a URL which is known by the browser (e.g. typing `gi` may autocomplete `github.com`, and the part `thub.com` is selected; the option enables automatically copying this selection to the clipboard).  |
-| `--option autoSelectCopiesToClipboard`      |   Off   | <p>Certain actions trigger an automatic selection of text in the URL bar or the search bar which aren’t considered user-initiated and as such are not added to the selection clipboard (e.g. selected text which can be inserted with middle-click on Linux) — see <a href="https://github.com/SebastianSimon/firefox-omni-tweaks/wiki/Selection-clipboard-behavior">the wiki entry</a>.</p><p>This option enables clipboard selection for most cases: <kbd>Ctrl</kbd>+<kbd>L</kbd> or <kbd>F6</kbd> for URL bar selection; <kbd>Ctrl</kbd>+<kbd>K</kbd> for search bar selection; <kbd>Esc</kbd> to restore the original URL; <kbd>Tab</kbd> to focus either URL bar or search bar; or single-click or double-click selecting the entire text — if enabled.</p><p>However, additional options must be passed if selection triggered by a tab switch should also be copied (<code>tabSwitchCopiesToClipboard</code>), and if selection triggered by URL auto-complete should be copied (<code>autoCompleteCopiesToClipboard</code>).</p> |
+| `--option autoSelectCopiesToClipboard`      |   Off   | <p>Certain actions trigger an automatic selection of text in the URL bar or the search bar which aren’t considered user-initiated and as such are not added to the selection clipboard (e.g. selected text which can be inserted with middle-click on Linux)—see <a href="https://github.com/SebastianSimon/firefox-omni-tweaks/wiki/Selection-clipboard-behavior">the wiki entry</a>.</p><p>This option enables clipboard selection for most cases: <kbd>Ctrl</kbd>+<kbd>L</kbd> or <kbd>F6</kbd> for URL bar selection; <kbd>Ctrl</kbd>+<kbd>K</kbd> for search bar selection; <kbd>Esc</kbd> to restore the original URL; <kbd>Tab</kbd> to focus either URL bar or search bar; or single-click or double-click selecting the entire text—if enabled.</p><p>However, additional options must be passed if selection triggered by a tab switch should also be copied (<code>tabSwitchCopiesToClipboard</code>), and if selection triggered by URL auto-complete should be copied (<code>autoCompleteCopiesToClipboard</code>).</p> |
 | `--option clearSearchBarOnSubmit`           |   Off   | Submitting a search from the separate search bar clears it. There’s discussion about this feature on <a href="https://superuser.com/q/319449/751213" title="Is it possible to automatically empty the Firefox search bar?">Super User</a> and on <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=253331" title="Search bar’s text should be cleared after a search is performed">Bugzilla</a>. |
 | `--option doubleClickSelectsAll`            |   Off   | Double-clicking the URL bar or the search bar selects the entire input field. |
 | `--option preventClickSelectsAll`           |   On    | Clicking the URL bar or the search bar no longer selects the entire input field. |
@@ -272,7 +272,7 @@ This goes against good UX practices.
 In Firefox, there used to be the preferences `browser.urlbar.clickSelectsAll`, `browser.urlbar.update1`, and `browser.urlbar.update2` to control this behavior and other updates, but the latter two were always expected to be temporary.
 
 Around March 2020, the [`browser.urlbar.clickSelectsAll` preference has been removed][regression-bug].
-Since then, this bug has been [under discussion][bug], where a patch has been suggested — this would involve recompiling Firefox from scratch.
+Since then, this bug has been [under discussion][bug], where a patch has been suggested—this would involve recompiling Firefox from scratch.
 As the _“`clickSelectsAll` doesn’t work”_ duplicates accumulate on Bugzilla to this day, one of these has received a [comment by Stephen McCarthy][bugzilla-workaround] which describes a workaround that involves editing internal Firefox files.
 This workaround looks like the simplest approach, but the approach didn’t work as-is.
 
