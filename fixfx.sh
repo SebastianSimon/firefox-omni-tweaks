@@ -723,7 +723,11 @@ edit_and_lock_based_on_options(){
     edit_file 'clearSearchBarOnSubmit' 'browser_omni' 'chrome/browser/content/browser/search/searchbar.js' '/openTrustedLinkIn/ s/$/\n      textBox.value = "";/'
 
     if grep --quiet '#isAddressbar' -- "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}"; then
-      edit_file 'clearSearchBarOnSubmit' "${urlbarinput_key}" "${urlbarinput_path}" '/this\.window\.openTrustedLinkIn\(/ s/(^\s+)(.*\);)$/\1\2\n\n\1if (!this.#isAddressbar) {\n\1  this.value = "";\n\1}/'
+      if grep --quiet 'openSERP' -- "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}"; then
+        edit_file 'clearSearchBarOnSubmit' "${urlbarinput_key}" "${urlbarinput_path}" '/^    if \(loadStatus\.then\) \{$/,/^    \}$/ s/^(\s+)(\})$/\1\2\n\1this.handleRevert();/'
+      else
+        edit_file 'clearSearchBarOnSubmit' "${urlbarinput_key}" "${urlbarinput_path}" '/this\.window\.openTrustedLinkIn\(/ s/^(\s+)(.*\);)$/\1\2\n\n\1if (!this.#isAddressbar) {\n\1  this.value = "";\n\1}/'
+      fi
     fi
   fi
 

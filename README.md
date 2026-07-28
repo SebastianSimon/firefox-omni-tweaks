@@ -14,9 +14,9 @@ Versions:
 pacman -Qi linux gnome-desktop unzip zip
 -->
 
-* Firefox Nightly 91 (2020-07-01) through 151 (2026-04-18) (64-Bit)
+* Firefox Nightly 91 (2020-07-01) through 155 (2026-08-03) (64-Bit)
 * Firefox ESR 78 through 102 (64-bit)
-* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `6.19.11.arch1-1`)
+* Arch Linux ([`core/linux`][linux] `5.8.1.arch1-1` through `7.1.5.arch1-2`)
 * Gnome Desktop ([`extra/gnome-desktop`][gnome-desktop] `1:3.36.5-1` through `1:44.5-1`)
 * Bash 4.x+
 * Info-ZIP UnZip ([`extra/unzip`][unzip] `6.0-14` through `6.0-23`)
