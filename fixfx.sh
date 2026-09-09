@@ -709,6 +709,10 @@ edit_and_lock_based_on_options(){
   if [[ ! -f "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}" ]]; then
     urlbarinput_path='chrome/browser/content/browser/urlbar/UrlbarInput.mjs'
     urlbarinput_key='browser_omni'
+
+    if ! grep --quiet 'preventClickSelectsAll' -- "${unpack_dirs[$urlbarinput_key]}/${urlbarinput_path}"; then
+      urlbarinput_path='chrome/browser/content/browser/urlbar/UrlbarInputBase.mjs'
+    fi
   fi
 
   readonly urlbarinput_path
@@ -783,6 +787,10 @@ edit_and_lock_based_on_options(){
 
     if [[ ! -f "omni/${picture_in_picture_child_path}" ]]; then
       picture_in_picture_child_path='actors/PictureInPictureChild.sys.mjs'
+    fi
+
+    if [[ ! -f "omni/${picture_in_picture_child_path}" ]]; then
+      picture_in_picture_child_path='moz-src/toolkit/actors/PictureInPictureChild.sys.mjs'
     fi
 
     readonly picture_in_picture_child_path
